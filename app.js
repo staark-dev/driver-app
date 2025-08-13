@@ -78,8 +78,7 @@ function selectMainTab(tabName) {
     .forEach(panel => panel.classList.remove('active'));
 
   // afișăm doar panoul selectat
-  const activePanel = document.getElementById(tabName);
-  console.log("Tabel activ: ", tabName);
+  const activePanel = document.getElementById('tab-' + tabName.);
   if (activePanel) activePanel.classList.add('active');
 }
 
