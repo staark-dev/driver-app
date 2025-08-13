@@ -46,18 +46,33 @@ ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direc
   color: #fff;
 }
 
-/* Carduri Săptămână – mici ajustări */
-.day-card.empty{ opacity:.55; filter:grayscale(.1); }
+/* --- Weekly cards: layout & stil --- */
+.week-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); }
+.day-card  { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+.day-card.empty{ opacity:.55; filter:grayscale(.06); }
+
+.day-header{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
 .badge-col{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:56px; }
+.day-badge{ width:28px; height:28px; border-radius:999px; display:grid; place-items:center; background:#f1f5f9; color:#0f172a; font-weight:600; font-size:13px; }
 .date-text{ font-size:11px; color:#475569; line-height:1; white-space:nowrap; }
+.day-dots{ display:flex; gap:6px; align-items:center; }
+.dot-or,.dot-bl{ width:8px; height:8px; border-radius:999px; }
+.dot-or{ background:#f59e0b; }  /* zi extinsă */
+.dot-bl{ background:#38bdf8; }  /* pauze ≥45' în zi */
+
+.row-metric{ display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; }
+.row-metric svg{ width:20px; height:20px; }
+.metric-sub{ font-size:12px; color:#64748b; }
+.metric-val{ font-size:22px; font-weight:600; min-width:56px; text-align:right; } /* aliniere egală */
+
 .start-line{ margin-top:8px; font-size:12px; color:#64748b; }
 
-/* Chip pentru „pauza de repaus zilnic” (11h/10h/9h) */
+/* Chip pentru repaus (pauza zilnică) */
 .rest-chip{ font-size:12px; font-weight:600; border:1px solid #e5e7eb; background:#f8fafc; border-radius:10px; padding:2px 8px; }
-.rest-good{ color:#15803d; border-color:#bbf7d0; background:#f0fdf4; } /* ≥ 11h */
-.rest-mid { color:#92400e; border-color:#fed7aa; background:#fff7ed; } /* ≥ 10h */
-.rest-low { color:#991b1b; border-color:#fecaca; background:#fef2f2; } /* ≥ 9h */
-.rest-unk { color:#475569; } /* necunoscut */
+.rest-good{ color:#15803d; border-color:#bbf7d0; background:#f0fdf4; } /* ≥11h */
+.rest-mid { color:#92400e; border-color:#fed7aa; background:#fff7ed; } /* ≥10h */
+.rest-low { color:#991b1b; border-color:#fecaca; background:#fef2f2; } /* ≥9h sau sub */
+.rest-unk { color:#475569; }
 
 .legend{ margin-top:12px; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
 .swatch{ width:10px; height:10px; border-radius:2px; display:inline-block; }
