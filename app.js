@@ -1,5 +1,6 @@
 // ==== Config pentru GitHub Pages subfolder ====
-const BASE_SCOPE = '/';
+// Ex: "https://site.com/sub/app/index.html" -> "/sub/app/"
+const BASE_SCOPE = location.pathname.replace(/[^/]*$/, '');
 
 // ==== Utilitare timp ====
 const H = (h,m=0) => (h*60+m)*60*1000;
