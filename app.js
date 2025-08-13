@@ -162,8 +162,8 @@ const el = {
 
 function colorByRatio(r){ return r<.8?'var(--ok)':(r<1?'var(--warn)':'var(--bad)'); }
 function setBar(elBar, valueMs, targetMs){
-  const ratio = targetMs ? clamp((valueMs||0)/targetMs) : 0;
-  elBar.style.width = (ratio*100)+'%';
+  const ratio = targetMs ? clamp((valueMs || 0) / targetMs) : 0;
+  elBar.style.width = Math.max(10, ratio * 100) + '%'; //(ratio*100)+'%'; //Math.max(10, (duration / total) * 100) + '%';
   elBar.style.background = colorByRatio(ratio);
 }
 function calcTotalsWithCurrent(){
@@ -287,7 +287,6 @@ function renderWeeklyCards(){
       <div class="day-card">
         <div class="day-header">
           <div class="day-badge">${dateStr}</div>
-          <div class="start-time">Start: ${startTime}</div>
           <div class="day-dots">
             ${ext?'<span class="dot-or" title="Zi extinsă 10h"></span>':''}
             ${longBreak?'<span class="dot-bl" title="Pauze ≥ 45 min"></span>':''}
@@ -298,10 +297,17 @@ function renderWeeklyCards(){
           <span class="metric-sub">🚗 Condus</span>
           <span class="metric-val mono">${fmtHM(t.drive || 0)}</span>
         </div>
+        
         <div class="row-metric" title="Muncă total (zi)">
           <svg viewBox="0 0 24 24"><path d="M4 3h2v18H4V3Zm3 2h9l-1.5 3L16 11H7V5Z"/></svg>
-          <span class="metric-sub">☕ Pauza</span>
+          <span class="metric-sub">Pauza</span>
           <span class="metric-val mono">${fmtHM(t.break || 0)}</span>
+        </div>
+
+        <div class="row-metric" title="Start Program (total zi)">
+          <svg viewBox="0 0 24 24"><path d="M4 3h2v18H4V3Zm3 2h9l-1.5 3L16 11H7V5Z"/></svg>
+          <span class="metric-sub">Start</span>
+          <span class="metric-val mono">${startTime}</span>
         </div>
       </div>
     `;
