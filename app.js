@@ -240,8 +240,7 @@ document.getElementById('btnExportCSVFull')?.addEventListener('click', ()=>{
   document.body.appendChild(a); a.click(); a.remove();
 });
 
-
-function archiveDay(dayObj){
+function archiveDay(dayObj) {
   if (dayObj.current){
     const now = Date.now();
     const {type,startAt} = dayObj.current;
@@ -251,12 +250,24 @@ function archiveDay(dayObj){
     if (type==='drive') dayObj.sessionDriveMs += delta;
     dayObj.current = null;
   }
+
   const logs = JSON.parse(localStorage.getItem(LS_LOG) || '[]');
-  const withoutSame = logs.filter(x=>x.day!==dayObj.day);
-  withoutSame.push({ day:dayObj.day, totals:dayObj.totals, events:dayObj.events, extended:!!dayObj.extended });
-  withoutSame.sort((a,b)=>a.day.localeCompare(b.day));
-  
-  localStorage.setItem(LS_LOG, JSON.stringify(withoutSame.slice(-30)));
+  const withoutSame = logs.filter(x => x.day !== dayObj.day);
+
+  // ⬇️ PUNE și startAt, extended rămâne
+  withoutSame.push({
+    day: dayObj.day,
+    startAt: dayObj.startAt || null,
+    totals: dayObj.totals,
+    events: dayObj.events,
+    extended: !!dayObj.extended
+  });
+
+  withoutSame.sort((a,b) => a.day.localeCompare(b.day));
+
+  // ⬇️ crește retenția (pune cât vrei)
+  const MAX_LOG_DAYS = 180;
+  localStorage.setItem(LS_LOG, JSON.stringify(withoutSame.slice(-MAX_LOG_DAYS)));
 }
 
 function loadState(){
@@ -400,6 +411,11 @@ function endOfDayIfChanged(){
 function render(){
   endOfDayIfChanged();
 
+  // Auto-pauză dacă nu există activitate și nu e pauză
+  if (!state.current || state.current.type !== 'break') {
+    start('break');
+  }
+  
   // header + setări
   el.stateLabel.textContent = state.current ? state.current.type : 'inactiv';
   el.dayLabel.textContent = state.day;
