@@ -1,6 +1,9 @@
 // ==== Config pentru GitHub Pages subfolder ====
+console.log('main script loaded');
+
 // Ex: "https://site.com/sub/app/index.html" -> "/sub/app/"
 const BASE_SCOPE = location.pathname.replace(/[^/]*$/, '');
+
 // ==== Utilitare timp ====
 const H = (h,m=0) => (h*60+m)*60*1000;
 const fmtHM = (ms) => {
@@ -65,6 +68,7 @@ function start(type) {
 }
 
 function selectMainTab(tabName) {
+  console.log("[SERVER] selectMainTab loaded !");
   // scoatem aria-selected de la toate butoanele
   document.querySelectorAll('.mobile-actions .action')
     .forEach(btn => btn.setAttribute('aria-selected', 'false'));
@@ -484,6 +488,17 @@ document.querySelector('.mobile-nav').addEventListener('click', (e)=>{
   ['daily','weekly','details','settings'].forEach(k =>
     el.panels[k].classList.toggle('active', k===tab)
   );
+
+  console.log("[SERVER] moile nav button has been loaded.");
+  const rowSection = document.querySelector('.row');
+  
+  if (rowSection) {
+    if (['weekly', 'details', 'settings'].includes(tab)) {
+      rowSection.style.display = 'none';
+    } else {
+      rowSection.style.display = '';
+    }
+  }
 });
 
 // Acțiuni Zilnic
