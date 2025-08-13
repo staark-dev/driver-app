@@ -1,4 +1,4 @@
-const CACHE = 'truck-app-v8'; // bump când publici
+const CACHE = 'truck-app-' + new Date().toISOString().slice(0,10); // bump când publici
 const CORE = ['.', 'index.html', 'manifest.json', 'styles.css', 'app.js'];
 
 self.addEventListener('install', (e) => {
