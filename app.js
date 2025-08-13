@@ -64,6 +64,24 @@ function start(type) {
   saveState(); render();
 }
 
+function selectMainTab(tabName) {
+  // scoatem aria-selected de la toate butoanele
+  document.querySelectorAll('.mobile-actions .action')
+    .forEach(btn => btn.setAttribute('aria-selected', 'false'));
+
+  // activăm butonul cerut
+  const activeBtn = document.querySelector(`.mobile-actions .action[data-tab="${tabName}"]`);
+  if (activeBtn) activeBtn.setAttribute('aria-selected', 'true');
+
+  // ascundem toate panourile
+  document.querySelectorAll('.tabpanel')
+    .forEach(panel => panel.classList.remove('active'));
+
+  // afișăm doar panoul selectat
+  const activePanel = document.getElementById(tabName);
+  if (activePanel) activePanel.classList.add('active');
+}
+
 function archiveDay(dayObj){
   if (dayObj.current){
     const now = Date.now();
