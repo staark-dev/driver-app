@@ -46,6 +46,32 @@ ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direc
   color: #fff;
 }
 
+.controls > button {
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    padding: 10px 20px;
+}
+
+.controls > button:nth-child(1) {
+    background: #7299c1;
+    color: white;
+}
+
+.controls > button:nth-child(2) {
+    background: #d3664d;
+    color: white;
+}
+
+.controls > button:nth-child(3) {
+    background: #2ac160;
+    color: white;
+}
+
+.controls > button:nth-child(4) {
+    background: #000000;
+    color: white;
+}
+
 /* --- Weekly cards: layout & stil --- */
 .week-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); }
 .day-card  { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
@@ -90,21 +116,13 @@ ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direc
 .hint{ font-size:12px; color:#334155; background:#f1f5f9; border:1px solid #e5e7eb; padding:6px 8px; border-radius:8px; }
 
 /* butoane acțiuni din tabul Zilnic */
-.controls{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 10px; }
+.controls{ display:flex; flex-wrap:wrap; gap:8px; margin:0 0 10px; justify-content: center; }
 .chip{ display:flex; align-items:center; gap:6px; padding:8px 10px; border:1px solid #e5e7eb; border-radius:12px; background:#f8fafc; cursor:pointer; }
 .chip:disabled{ opacity:.5; cursor:default; }
 
 /* Meniul principal jos (taburi) – 4 butoane */
-.mobile-nav{
-  position:fixed; left:0; right:0; bottom:0;
-  background:#fff; border-top:1px solid #e5e7eb; box-shadow: var(--shadow);
-  padding:8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-  z-index:999;
-}
-.mobile-actions{
-  display:grid; grid-template-columns:repeat(4,1fr);
-  gap:8px; max-width:1100px; margin:0 auto;
-}
+.mobile-nav{ position:fixed; left:0; right:0; bottom:0; background:#fff; border-top:1px solid #e5e7eb; box-shadow: var(--shadow); padding:8px max(8px, env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); z-index:999;}
+.mobile-actions{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; max-width:1100px; margin:0 auto;}
 .action{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:10px; border:1px solid #e5e7eb; border-radius:12px; background:#f8fafc; cursor:pointer; }
 .action svg{ width:22px; height:22px; }
 .action[aria-selected="true"]{ background:#111827; color:#fff; border-color:#111827; }
@@ -113,16 +131,9 @@ ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direc
 .week-grid { display:grid; gap:12px; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); }
 .day-card  { background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:12px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
 
-.day-header{
-  display:grid;
-  grid-template-columns:auto 1fr auto;
-  gap:10px; align-items:center; margin-bottom:6px;
-}
+.day-header{display:grid;grid-template-columns:auto 1fr auto;gap:10px; align-items:center; margin-bottom:6px;}
 .badge-col{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:48px; }
-.day-badge{
-  width:28px; height:28px; border-radius:999px; display:grid; place-items:center;
-  background:#f1f5f9; color:#0f172a; font-weight:600; font-size:13px;
-}
+.day-badge{width:28px; height:28px; border-radius:999px; display:grid; place-items:center;background:#f1f5f9; color:#0f172a; font-weight:600; font-size:13px;}
 .date-text{ font-size:12px; color:#475569; line-height:1; white-space:nowrap; }
 
 .day-dots{ display:flex; gap:6px; align-items:center; }
