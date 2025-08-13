@@ -1,0 +1,390 @@
+// ==== Config – setează aici calea de bază dacă ești pe subfolder (ex: '/truck-app/') ====
+const BASE_SCOPE = ''; // ex: '' sau '/truck-app/'
+
+// ==== Utilitare timp ====
+const H = (h,m=0) => (h*60+m)*60*1000;
+const fmtHM = (ms) => {
+  const totalMin = Math.max(0, Math.round((ms||0)/60000));
+  const h = Math.floor(totalMin/60);
+  const m = String(totalMin%60).padStart(2,'0');
+  return `${h}:${m}`;
+};
+const clamp = (v,min=0,max=1)=>Math.max(min,Math.min(max,v));
+const todayKey = () => new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD
+const q = (s)=>document.querySelector(s);
+
+// ==== Limite ====
+const LIMITS = {
+  dailyDrive9: H(9,0),
+  dailyDrive10: H(10,0),
+  marker4h30: H(4,30),
+  reqBreak:   H(0,45),
+  dailyWork:  H(6,0),
+  weekDrive:  H(56,0),
+  fortDrive:  H(90,0)
+};
+
+// ==== Storage keys ====
+const LS_DAY='ta-day', LS_LOG='ta-logs', LS_SET='ta-settings';
+
+// ==== Setări ====
+const settings = loadSettings();
+function loadSettings(){
+  const s = JSON.parse(localStorage.getItem(LS_SET) || 'null') || { alerts:true };
+  localStorage.setItem(LS_SET, JSON.stringify(s));
+  return s;
+}
+function saveSettings(){ localStorage.setItem(LS_SET, JSON.stringify(settings)); }
+
+// ==== Stare zilnică ====
+function blankDay(day){
+  return {
+    day,
+    current: null,                 // { type:'drive'|'break'|'work', startAt:number }
+    totals: { drive:0, break:0, work:0 },
+    events: [],                    // { type, start, end }
+    sessionDriveMs: 0,             // condus de la ultima pauză ≥45'
+    extended: false,               // zi extinsă 10h
+    notifyFlags: { session45:false, dailyMax:false }
+  };
+}
+
+function archiveDay(dayObj){
+  if (dayObj.current){
+    const now = Date.now();
+    const {type,startAt} = dayObj.current;
+    const delta = Math.max(0, now - (startAt||now));
+    dayObj.events.push({type, start:startAt, end:now});
+    dayObj.totals[type] += delta;
+    if (type==='drive') dayObj.sessionDriveMs += delta;
+    dayObj.current = null;
+  }
+  const logs = JSON.parse(localStorage.getItem(LS_LOG) || '[]');
+  const withoutSame = logs.filter(x=>x.day!==dayObj.day);
+  withoutSame.push({ day:dayObj.day, totals:dayObj.totals, events:dayObj.events, extended:!!dayObj.extended });
+  withoutSame.sort((a,b)=>a.day.localeCompare(b.day));
+  localStorage.setItem(LS_LOG, JSON.stringify(withoutSame.slice(-30)));
+}
+
+function loadState(){
+  const saved = JSON.parse(localStorage.getItem(LS_DAY) || 'null');
+  const day = todayKey();
+  if (!saved || saved.day !== day){
+    if (saved) archiveDay(saved);
+    const fresh = blankDay(day);
+    localStorage.setItem(LS_DAY, JSON.stringify(fresh));
+    return fresh;
+  }
+  // sanity defaults
+  saved.totals ||= {drive:0,break:0,work:0};
+  saved.sessionDriveMs ||= 0;
+  saved.events ||= [];
+  saved.notifyFlags ||= {session45:false,dailyMax:false};
+  return saved;
+}
+let state = loadState();
+const saveState = ()=> localStorage.setItem(LS_DAY, JSON.stringify(state));
+
+// ==== Helpers limite ====
+const extendedUsedLast7 = ()=> {
+  const logs = JSON.parse(localStorage.getItem(LS_LOG) || '[]');
+  const last7 = logs.slice(-7);
+  return last7.filter(d=>d.extended).length + (state.extended?1:0);
+};
+const extendedLeft = ()=> Math.max(0, 2 - extendedUsedLast7());
+const currentDailyLimit = ()=> state.extended ? LIMITS.dailyDrive10 : LIMITS.dailyDrive9;
+
+// ==== Notificări ====
+async function ensurePermission(){
+  if (!settings.alerts || !('Notification' in window)) return false;
+  if (Notification.permission==='granted') return true;
+  if (Notification.permission==='denied') return false;
+  return (await Notification.requestPermission())==='granted';
+}
+function beep(){ try{ const ctx=new (window.AudioContext||window.webkitAudioContext)(); const o=ctx.createOscillator(), g=ctx.createGain(); o.type='sine'; o.frequency.value=880; g.gain.value=0.0001; o.connect(g); g.connect(ctx.destination); o.start(); const t=ctx.currentTime; g.gain.exponentialRampToValueAtTime(0.2,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.6); o.stop(t+0.65);}catch(e){} }
+async function notify(title, body){
+  if (!settings.alerts) return;
+  beep(); if (navigator.vibrate) navigator.vibrate(300);
+  if (await ensurePermission()){
+    try { new Notification(title,{ body, icon:`${BASE_SCOPE}icons/icon-192.png` }); } catch(e){}
+  }
+  const old=document.title; document.title=`🔔 ${title}`; setTimeout(()=>document.title=old,2500);
+}
+
+// ==== Elemente UI ====
+const el = {
+  stateLabel: q('#stateLabel'),
+  dayLabel:   q('#dayLabel'),
+  drivenVal:  q('#drivenVal'),
+  remainVal:  q('#remainVal'),
+  gaugeProg:  q('#gaugeProg'),
+  marker:     q('#marker'),
+  bars: {
+    driveSess: q('#barDriveSess'),
+    driveDay:  q('#barDriveDay'),
+    break:     q('#barBreak'),
+    work:      q('#barWork'),
+    w1:        q('#barW1'),
+    w2:        q('#barW2')
+  },
+  barVals: {
+    driveSess: q('#barDriveSessVal'),
+    driveDay:  q('#barDriveDayVal'),
+    break:     q('#barBreakVal'),
+    work:      q('#barWorkVal'),
+    w1:        q('#barW1Val'),
+    w2:        q('#barW2Val')
+  },
+  weekGrid: q('#weekGrid'),
+  logTable: q('#logTable'),
+  switches: {
+    alerts: q('#toggleAlerts'),
+    extended: q('#toggleExtended'),
+    extLeft: q('#extLeftBadge')
+  },
+  actionBtns: {
+    drive: q('#btnStartDrive'),
+    break: q('#btnBreak'),
+    work:  q('#btnWork'),
+    stop:  q('#btnStop')
+  },
+  panels: {
+    daily:  q('#tab-daily'),
+    weekly: q('#tab-weekly'),
+    details:q('#tab-details')
+  }
+};
+
+function colorByRatio(r){ return r<.8?'var(--ok)':(r<1?'var(--warn)':'var(--bad)'); }
+function setBar(elBar, valueMs, targetMs){
+  const ratio = targetMs ? clamp((valueMs||0)/targetMs) : 0;
+  elBar.style.width = (ratio*100)+'%';
+  elBar.style.background = colorByRatio(ratio);
+}
+const getLogs = ()=> JSON.parse(localStorage.getItem(LS_LOG) || '[]');
+function calcTotalsWithCurrent(){
+  const now = Date.now();
+  const t = {...state.totals};
+  if (state.current){
+    const d = Math.max(0, now - (state.current.startAt||now));
+    t[state.current.type] += d;
+  }
+  return t;
+}
+function sumWindows(){
+  const logs = getLogs();
+  const days = [...logs, {day: state.day, totals: {...state.totals}}];
+  const extra = state.current?.type==='drive' ? (Date.now()-state.current.startAt) : 0;
+  days[days.length-1].totals.drive += extra;
+  const lastN = (n)=> days.slice(-n).reduce((a,d)=>a+(d.totals?.drive||0),0);
+  return { weekDrive:lastN(7), fortDrive:lastN(14) };
+}
+
+// ==== Mașina de stări ====
+function start(type){ stopCurrent(); state.current={type, startAt: Date.now()}; saveState(); render(); }
+function stopCurrent(){
+  if (!state.current) return;
+  const now=Date.now();
+  const {type,startAt} = state.current;
+  const d = Math.max(0, now - (startAt||now));
+  state.totals[type] += d;
+  if (type==='drive') state.sessionDriveMs += d;
+  if (type==='break' && d >= LIMITS.reqBreak){
+    state.sessionDriveMs = 0;      // reset sesiune după pauză ≥45′
+    state.notifyFlags.session45 = false;
+  }
+  state.events.push({ type, start:startAt, end:now });
+  state.current=null; saveState();
+}
+function endOfDayIfChanged(){
+  const day=todayKey();
+  if (day !== state.day){ archiveDay(state); state=blankDay(day); saveState(); }
+}
+
+// ==== Randare ====
+function render(){
+  endOfDayIfChanged();
+
+  // header + setări
+  el.stateLabel.textContent = state.current ? state.current.type : 'inactiv';
+  el.dayLabel.textContent = state.day;
+  el.switches.alerts.checked = !!settings.alerts;
+  el.switches.extended.checked = !!state.extended;
+  const left = extendedLeft();
+  el.switches.extLeft.textContent = `Extinse rămase: ${left}`;
+  el.switches.extended.disabled = left===0 && !state.extended;
+
+  // totaluri curente + sesiune
+  const now = Date.now();
+  const totals = calcTotalsWithCurrent();
+
+  let driveSess = state.sessionDriveMs || 0;
+  if (state.current?.type==='drive'){
+    driveSess += Math.max(0, now - (state.current.startAt||now));
+  }
+  const driveDay = totals.drive || 0;
+  const dayLimit = currentDailyLimit();
+  const remain = Math.max(0, dayLimit - driveDay);
+
+  // valori UI
+  el.drivenVal.textContent = fmtHM(driveSess);
+  el.remainVal.textContent = fmtHM(remain);
+
+  // cerc sesiune (raport la 4h30)
+  const r=78, c=2*Math.PI*r, p = clamp(driveSess / LIMITS.marker4h30);
+  el.gaugeProg.setAttribute('stroke-dasharray', `${c*p} ${c*(1-p)}`);
+  const angle = 2*Math.PI*1 - Math.PI/2; // marker 4:30 jos
+  const x = 90 + r*Math.cos(angle), y = 90 + r*Math.sin(angle);
+  el.marker.setAttribute('cx', x.toFixed(2)); el.marker.setAttribute('cy', y.toFixed(2));
+
+  // bare
+  setBar(el.bars.driveSess, driveSess, LIMITS.marker4h30);
+  setBar(el.bars.driveDay,  driveDay,  dayLimit);
+  setBar(el.bars.break,     totals.break||0,   LIMITS.reqBreak);
+  setBar(el.bars.work,      totals.work||0,    LIMITS.dailyWork);
+
+  const {weekDrive, fortDrive} = sumWindows();
+  setBar(el.bars.w1, weekDrive, LIMITS.weekDrive);
+  setBar(el.bars.w2, fortDrive, LIMITS.fortDrive);
+
+  // text bare
+  q('#barDriveSessVal').textContent = fmtHM(driveSess);
+  q('#barDriveDayVal').textContent  = fmtHM(driveDay);
+  q('#barBreakVal').textContent     = fmtHM(totals.break||0);
+  q('#barWorkVal').textContent      = fmtHM(totals.work||0);
+  q('#barW1Val').textContent        = fmtHM(weekDrive);
+  q('#barW2Val').textContent        = fmtHM(fortDrive);
+
+  renderWeeklyCards();
+  renderLog();
+  updateActionButtons();
+  checkAlerts(driveSess, driveDay, dayLimit);
+}
+
+function renderWeeklyCards(){
+  const logs = getLogs();
+  const days = [...logs, { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended }].slice(-7);
+  el.weekGrid.innerHTML = days.map((d,i)=>{
+    const t=d.totals || {drive:0, work:0, break:0};
+    const longBreak = (t.break||0) >= LIMITS.reqBreak;
+    const ext = !!d.extended;
+    return `
+      <div class="day-card">
+        <div class="day-header">
+          <div class="day-badge">${i+1}</div>
+          <div class="day-dots">
+            ${ext?'<span class="dot-or" title="Zi extinsă 10h"></span>':''}
+            ${longBreak?'<span class="dot-bl" title="Pauze ≥ 45 min"></span>':''}
+          </div>
+        </div>
+        <div class="row-metric" title="Condus (total zi)">
+          <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.75 6H4.25A8 8 0 0 1 12 4Zm-8 8h6a2 2 0 0 0 2-2h4a6 6 0 0 1-6 6H4a2 2 0 0 1-2-2Zm20 0a2 2 0 0 1-2 2h-4a6 6 0 0 1-6-6h4a2 2 0 0 0 2 2h6Z"/></svg>
+          <span class="metric-sub">Condus</span>
+          <span class="metric-val mono">${fmtHM(t.drive||0)}</span>
+        </div>
+        <div class="row-metric" title="Muncă total (zi)">
+          <svg viewBox="0 0 24 24"><path d="M4 3h2v18H4V3Zm3 2h9l-1.5 3L16 11H7V5Z"/></svg>
+          <span class="metric-sub">Muncă</span>
+          <span class="metric-val mono">${fmtHM(t.work||0)}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const {weekDrive, fortDrive} = sumWindows();
+  q('#sum7').textContent = fmtHM(weekDrive);
+  q('#sum14').textContent = fmtHM(fortDrive);
+}
+
+function renderLog(){
+  const list = [...state.events];
+  if (state.current){
+    list.push({ type: state.current.type, start: state.current.startAt, end: Date.now() });
+  }
+  el.logTable.innerHTML = list.map(e=>{
+    const dur = Math.max(0, (e.end||Date.now()) - e.start);
+    const hhmm = fmtHM(dur);
+    const start = new Date(e.start).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+    return `<tr><td>${start}</td><td>${e.type}</td><td class="mono">${hhmm}</td></tr>`;
+  }).join('');
+}
+
+function updateActionButtons(){
+  const t = state.current?.type;
+  el.actionBtns.drive.disabled = t==='drive';
+  el.actionBtns.break.disabled = t==='break';
+  el.actionBtns.work.disabled  = t==='work';
+  el.actionBtns.stop.disabled  = !t;
+}
+
+async function checkAlerts(driveSess, driveDay, limitDay){
+  if (!state.notifyFlags.session45 && driveSess >= LIMITS.marker4h30){
+    state.notifyFlags.session45 = true; saveState();
+    await notify('Pauză necesară', 'Ai atins 4h30 de condus în sesiunea curentă.');
+  }
+  if (!state.notifyFlags.dailyMax && driveDay >= limitDay){
+    state.notifyFlags.dailyMax = true; saveState();
+    await notify('Limită zilnică atinsă', `Ai ajuns la ${limitDay===LIMITS.dailyDrive10?'10h':'9h'} de condus astăzi.`);
+  }
+}
+
+// ==== Evenimente UI ====
+// Footer tabs – delegare
+document.querySelector('.mobile-nav').addEventListener('click', (e)=>{
+  const btn = e.target.closest('[role="tab"][data-tab]');
+  if (!btn) return;
+  document.querySelectorAll('.mobile-nav [role="tab"]').forEach(b=>b.setAttribute('aria-selected','false'));
+  btn.setAttribute('aria-selected','true');
+  const tab = btn.dataset.tab;
+  ['daily','weekly','details'].forEach(k => el.panels[k].classList.toggle('active', k===tab));
+});
+
+// Acțiuni
+el.actionBtns.drive.onclick = ()=> start('drive');
+el.actionBtns.break.onclick = ()=> start('break');
+el.actionBtns.work.onclick  = ()=> start('work');
+el.actionBtns.stop.onclick  = ()=>{ if(!state.current) return; if(confirm('Termini sesiunea curentă?')){ stopCurrent(); render(); } };
+
+// Switches
+el.switches.alerts.addEventListener('change', async (e)=>{ settings.alerts=e.target.checked; saveSettings(); if(settings.alerts) await ensurePermission(); });
+el.switches.extended.addEventListener('change', (e)=>{
+  const want = e.target.checked;
+  if (want){
+    if (extendedLeft()===0){ alert('Ai folosit deja 2 zile extinse în ultimele 7 zile.'); e.target.checked=false; return; }
+    state.extended = true;
+  } else { state.extended = false; }
+  state.notifyFlags.dailyMax=false; saveState(); render();
+});
+
+// Export / Import
+q('#btnExportCSV').onclick = ()=>{
+  const logs=getLogs(); const rows=[['day','type','start','end','duration_ms']];
+  logs.forEach(d=>d.events.forEach(e=>rows.push([d.day,e.type,new Date(e.start).toISOString(),new Date(e.end).toISOString(),(e.end-e.start)])));
+  const csv = rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+  download('truck-log.csv','text/csv',csv);
+};
+q('#btnExportJSON').onclick = ()=>{
+  const data={ today:state, history:getLogs() };
+  download('truck-log.json','application/json',JSON.stringify(data,null,2));
+};
+q('#importJsonInput').addEventListener('change', async (e)=>{
+  const file=e.target.files[0]; if(!file) return;
+  try{
+    const text=await file.text(); const data=JSON.parse(text);
+    if(data?.today && data?.history){
+      localStorage.setItem(LS_DAY, JSON.stringify(data.today));
+      localStorage.setItem(LS_LOG, JSON.stringify(data.history));
+      state = loadState(); alert('Import realizat.'); render();
+    } else alert('Fișier JSON invalid.');
+  }catch(err){ alert('Eroare la import.'); }
+  e.target.value='';
+});
+function download(name,type,content){ const blob=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+
+// ==== Tick & init ====
+setInterval(render, 1000);
+if ('serviceWorker' in navigator){
+  window.addEventListener('load', ()=> navigator.serviceWorker.register(`${BASE_SCOPE}sw.js`, { scope: BASE_SCOPE || '/' }).catch(console.error));
+}
+document.addEventListener('visibilitychange', ()=>{ endOfDayIfChanged(); render(); });
+(async ()=>{ if(settings.alerts) await ensurePermission(); render(); })();
