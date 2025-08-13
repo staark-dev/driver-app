@@ -278,76 +278,94 @@ function render(){
   checkAlerts(driveSess, driveDay, dayLimit);
 }
 
+function finishDay(){
+  // oprește activitatea în curs și pornește repausul (pauză)
+  stopCurrent();
+  const now = Date.now();
+  // setează pauză imediat după terminare
+  state.current = { type: 'break', startAt: now };
+  // dacă nu ai ora de start a zilei setată, nu o umple aici; doar intră pe pauză
+  saveState();
+  render();
+}
+
 function renderWeeklyCards(){
   const logs = getLogs();
-  // compunem lista: ultimele zile arhivate + azi (cu tot cu startAt dacă există)
-  const days = [...logs, {
-    day: state.day,
-    totals: calcTotalsWithCurrent(),
-    extended: state.extended,
-    startAt: state.startAt || null
-  }];
 
-  // păstrăm doar ultimele 7 și ordonăm descrescător după dată (cel mai recent ultimul)
-  const last7 = days.slice(-7).sort((a, b) => new Date(a.day) - new Date(b.day));
+  // indexează după zi pentru acces rapid
+  const byDay = {};
+  logs.forEach(d => { byDay[d.day] = d; });
+  // include și ziua curentă în index (cu tot cu startAt dacă există)
+  byDay[state.day] = { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended, startAt: state.startAt || null };
 
-  // pentru calculul pauzei zilnice avem nevoie și de startAt din ziua următoare
+  // determină săptămâna curentă DUMINICĂ–VINERI (6 zile)
+  const today = new Date(state.day);
+  const dow = today.getDay();           // 0=Sun, 1=Mon, ..., 6=Sat
+  const start = new Date(today);        // mută la duminica din săptămână
+  start.setDate(today.getDate() - dow); // dacă azi e miercuri (3) scade 3 → duminică
+
+  // compune zilele: Duminică, Luni, Marți, Miercuri, Joi, Vineri
+  const daysKeys = [];
+  for (let i = 0; i < 6; i++){ // 0..5 = Sun..Fri
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    const iso = d.toLocaleDateString('sv-SE'); // YYYY-MM-DD
+    daysKeys.push(iso);
+  }
+
+  // helperi
   const H = (h,m=0)=> (h*60+m)*60*1000;
+  const fmtDate = iso => new Date(iso).toLocaleDateString('sv-SE', { day:'2-digit', month:'2-digit', year:'numeric' });
+  const fmtTime = ms  => new Date(ms).toLocaleTimeString('sv-SE', { hour:'2-digit', minute:'2-digit' });
 
-  // helper: formatează data dd.mm.yyyy
-  const fmtDate = (iso) => new Date(iso).toLocaleDateString('ro-RO', {day:'2-digit', month:'2-digit', year:'numeric'});
-  const fmtTime = (ms)=> new Date(ms).toLocaleTimeString('ro-RO', {hour:'2-digit', minute:'2-digit'});
-  
-  //const days = [...logs, { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended }];
-  el.weekGrid.innerHTML = last7.map((d, idx) => {
-    const t = d.totals || { 
-      drive:0, 
-      break:0, 
-      work:0 
-    };
-    const longBreakInDay = (t.break || 0) >= LIMITS.reqBreak;
-    const ext = !!d.extended;
+  // pentru calculul PAUZEI ZILNICE (odihnă) între zi și ziua următoare
+  function restLabelFor(dayIso){
+    const cur = byDay[dayIso];
+    if (!cur || !cur.startAt) return '--:--';
+    const t = cur.totals || {drive:0, work:0, break:0};
+    const endOfDay = cur.startAt + (t.drive||0) + (t.work||0) + (t.break||0);
 
-    // Data în format românesc
-    const dateStr = new Date(d.day).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    // găsește ziua următoare în calendar (nu doar în cele 6 carduri)
+    const dt = new Date(dayIso);
+    dt.setDate(dt.getDate() + 1);
+    const nextIso = dt.toLocaleDateString('sv-SE');
+    const next = byDay[nextIso];
+    if (!next || !next.startAt) return '--:--';
 
-    // ora de start pentru această zi (dacă e salvată)
-    const startStr = d.startAt ? fmtTime(d.startAt) : '--:--';
-    
-    // calcul PAUZĂ ZILNICĂ (odihnă): de la sfârșitul zilei curente până la startul zilei următoare
-    // Sfârșit zi = startAt + (drive + work + break). Dacă nu avem startAt, nu calculăm.
-    let restLabel = '--:--';
-    if (d.startAt) {
-      const endOfDay = d.startAt + (t.drive||0) + (t.work||0) + (t.break||0);
+    const restMs = Math.max(0, next.startAt - endOfDay);
+    if (restMs >= H(11)) return '11h';
+    if (restMs >= H(10)) return '10h';
+    if (restMs >= H(9))  return '9h';
+    return fmtHM(restMs);
+  }
 
-      // găsește ziua următoare după data curentă
-      const iInAll = days.findIndex(x => x.day === d.day);
-      const nextDay = iInAll >= 0 ? days[iInAll + 1] : null;
+  // generează carduri în ordinea Duminică→Vineri
+  el.weekGrid.innerHTML = daysKeys.map((iso, idx) => {
+    const d = byDay[iso] || null;
+    const t = d?.totals || { drive:0, break:0, work:0 };
+    const longBreakInDay = (t.break||0) >= LIMITS.reqBreak;
+    const ext = !!d?.extended;
+    const startStr = d?.startAt ? fmtTime(d.startAt) : '--:--';
+    const restChip = restLabelFor(iso);
+    const isEmpty = !d; // nu avem date pentru ziua respectivă
 
-      if (nextDay && nextDay.startAt) {
-        const restMs = Math.max(0, nextDay.startAt - endOfDay);
-
-        // etichetăm 11h / 10h / 9h, altfel HH:MM
-        if (restMs >= H(11)) restLabel = '11h';
-        else if (restMs >= H(10)) restLabel = '10h';
-        else if (restMs >= H(9))  restLabel = '9h';
-        else restLabel = fmtHM(restMs);
-      }
-    }
-    
     return `
-      <div class="day-card">
+      <div class="day-card ${isEmpty ? 'empty' : ''}">
         <div class="day-header">
-          <div class="day-badge">${idx+1}</div>
-          <div class="date-text">${fmtDate(d.day)}</div>
+          <div class="badge-col">
+            <div class="day-badge">${idx+1}</div>
+            <div class="date-text">${fmtDate(iso)}</div>
+          </div>
+
           <div class="start-line">Start: <strong>${startStr}</strong></div>
 
           <div class="day-dots">
             ${ext ? '<span class="dot-or" title="Zi extinsă 10h"></span>' : ''}
             ${longBreakInDay ? '<span class="dot-bl" title="Pauze ≥45′ în zi"></span>' : ''}
-            <span class="rest-chip" title="Pauza zilnică până la ziua următoare">${restLabel}</span>
+            <span class="rest-chip" title="Pauza zilnică până la ziua următoare">${restChip}</span>
           </div>
         </div>
+
         <div class="row-metric" title="Condus (total zi)">
           <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.75 6H4.25A8 8 0 0 1 12 4Zm-8 8h6a2 2 0 0 0 2-2h4a6 6 0 0 1-6 6H4a2 2 0 0 1-2-2Zm20 0a2 2 0 0 1-2 2h-4a6 6 0 0 1-6-6h4a2 2 0 0 0 2 2h6Z"/></svg>
           <span class="metric-sub">Condus</span>
@@ -363,6 +381,7 @@ function renderWeeklyCards(){
     `;
   }).join('');
 
+  // totaluri 7/14 rămân neschimbate
   const { weekDrive, fortDrive } = sumWindows();
   q('#sum7').textContent  = fmtHM(weekDrive);
   q('#sum14').textContent = fmtHM(fortDrive);
@@ -417,7 +436,12 @@ document.querySelector('.mobile-nav').addEventListener('click', (e)=>{
 el.actionBtns.drive.onclick = ()=> start('drive');
 el.actionBtns.break.onclick = ()=> start('break');
 el.actionBtns.work.onclick  = ()=> start('work');
-el.actionBtns.stop.onclick  = ()=>{ if(!state.current) return; if(confirm('Termini sesiunea curentă?')){ stopCurrent(); render(); } };
+//el.actionBtns.stop.onclick  = ()=>{ if(!state.current) return; if(confirm('Termini sesiunea curentă?')){ stopCurrent(); render(); } };
+el.actionBtns.stop.onclick = () => {
+  if (!state.current && !confirm('Nu ai o activitate activă. Începi pauza de repaus?')) return;
+  // nu mai cerem confirm separat dacă erai în ceva; intrăm direct în pauză
+  finishDay();
+};
 
 // Switches
 el.switches.alerts.addEventListener('change', async (e)=>{ settings.alerts=e.target.checked; saveSettings(); if(settings.alerts) await ensurePermission(); });
