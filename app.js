@@ -1,5 +1,5 @@
-// ==== Config – setează aici calea de bază dacă ești pe subfolder (ex: '/truck-app/') ====
-const BASE_SCOPE = ''; // ex: '' sau '/truck-app/'
+// ==== Config pentru GitHub Pages subfolder ====
+const BASE_SCOPE = '/';
 
 // ==== Utilitare timp ====
 const H = (h,m=0) => (h*60+m)*60*1000;
@@ -30,7 +30,9 @@ const LS_DAY='ta-day', LS_LOG='ta-logs', LS_SET='ta-settings';
 // ==== Setări ====
 const settings = loadSettings();
 function loadSettings(){
-  const s = JSON.parse(localStorage.getItem(LS_SET) || 'null') || { alerts:true };
+  const s = JSON.parse(localStorage.getItem(LS_SET) || 'null') || {
+    alerts:true, driverName:'', truckId:'', trailerId:'', routeName:''
+  };
   localStorage.setItem(LS_SET, JSON.stringify(s));
   return s;
 }
@@ -86,8 +88,9 @@ let state = loadState();
 const saveState = ()=> localStorage.setItem(LS_DAY, JSON.stringify(state));
 
 // ==== Helpers limite ====
+const getLogs = ()=> JSON.parse(localStorage.getItem(LS_LOG) || '[]');
 const extendedUsedLast7 = ()=> {
-  const logs = JSON.parse(localStorage.getItem(LS_LOG) || '[]');
+  const logs = getLogs();
   const last7 = logs.slice(-7);
   return last7.filter(d=>d.extended).length + (state.extended?1:0);
 };
@@ -127,14 +130,6 @@ const el = {
     w1:        q('#barW1'),
     w2:        q('#barW2')
   },
-  barVals: {
-    driveSess: q('#barDriveSessVal'),
-    driveDay:  q('#barDriveDayVal'),
-    break:     q('#barBreakVal'),
-    work:      q('#barWorkVal'),
-    w1:        q('#barW1Val'),
-    w2:        q('#barW2Val')
-  },
   weekGrid: q('#weekGrid'),
   logTable: q('#logTable'),
   switches: {
@@ -151,7 +146,17 @@ const el = {
   panels: {
     daily:  q('#tab-daily'),
     weekly: q('#tab-weekly'),
-    details:q('#tab-details')
+    details:q('#tab-details'),
+    settings:q('#tab-settings')
+  },
+  settingsUI: {
+    driver: q('#inpDriver'),
+    truck:  q('#inpTruck'),
+    trailer:q('#inpTrailer'),
+    route:  q('#inpRoute'),
+    saveTripBtn: q('#btnSaveTrip'),
+    loadTripInput: q('#loadTripInput'),
+    wipeAllBtn: q('#btnWipeAll')
   }
 };
 
@@ -161,7 +166,6 @@ function setBar(elBar, valueMs, targetMs){
   elBar.style.width = (ratio*100)+'%';
   elBar.style.background = colorByRatio(ratio);
 }
-const getLogs = ()=> JSON.parse(localStorage.getItem(LS_LOG) || '[]');
 function calcTotalsWithCurrent(){
   const now = Date.now();
   const t = {...state.totals};
@@ -247,7 +251,7 @@ function render(){
   setBar(el.bars.w1, weekDrive, LIMITS.weekDrive);
   setBar(el.bars.w2, fortDrive, LIMITS.fortDrive);
 
-  // text bare
+  // valorile text
   q('#barDriveSessVal').textContent = fmtHM(driveSess);
   q('#barDriveDayVal').textContent  = fmtHM(driveDay);
   q('#barBreakVal').textContent     = fmtHM(totals.break||0);
@@ -336,10 +340,12 @@ document.querySelector('.mobile-nav').addEventListener('click', (e)=>{
   document.querySelectorAll('.mobile-nav [role="tab"]').forEach(b=>b.setAttribute('aria-selected','false'));
   btn.setAttribute('aria-selected','true');
   const tab = btn.dataset.tab;
-  ['daily','weekly','details'].forEach(k => el.panels[k].classList.toggle('active', k===tab));
+  ['daily','weekly','details','settings'].forEach(k =>
+    el.panels[k].classList.toggle('active', k===tab)
+  );
 });
 
-// Acțiuni
+// Acțiuni Zilnic
 el.actionBtns.drive.onclick = ()=> start('drive');
 el.actionBtns.break.onclick = ()=> start('break');
 el.actionBtns.work.onclick  = ()=> start('work');
@@ -356,7 +362,7 @@ el.switches.extended.addEventListener('change', (e)=>{
   state.notifyFlags.dailyMax=false; saveState(); render();
 });
 
-// Export / Import
+// Export / Import din Detalii
 q('#btnExportCSV').onclick = ()=>{
   const logs=getLogs(); const rows=[['day','type','start','end','duration_ms']];
   logs.forEach(d=>d.events.forEach(e=>rows.push([d.day,e.type,new Date(e.start).toISOString(),new Date(e.end).toISOString(),(e.end-e.start)])));
@@ -379,12 +385,87 @@ q('#importJsonInput').addEventListener('change', async (e)=>{
   }catch(err){ alert('Eroare la import.'); }
   e.target.value='';
 });
+
+// Setări – populate & sync
+function fillSettingsUI(){
+  el.settingsUI.driver.value  = settings.driverName || '';
+  el.settingsUI.truck.value   = settings.truckId || '';
+  el.settingsUI.trailer.value = settings.trailerId || '';
+  el.settingsUI.route.value   = settings.routeName || '';
+}
+['driver','truck','trailer','route'].forEach(key=>{
+  const map = {driver:'driverName', truck:'truckId', trailer:'trailerId', route:'routeName'};
+  el.settingsUI[key].addEventListener('input', e=>{
+    settings[ map[key] ] = e.target.value;
+    saveSettings();
+  });
+});
+
+function collectTripData(){
+  return {
+    meta: {
+      exportedAt: new Date().toISOString(),
+      driverName: settings.driverName || '',
+      truckId:    settings.truckId || '',
+      trailerId:  settings.trailerId || '',
+      routeName:  settings.routeName || ''
+    },
+    today: state,
+    history: getLogs()
+  };
+}
+el.settingsUI.saveTripBtn.onclick = ()=>{
+  const data = collectTripData();
+  const name = `cursa_${(settings.routeName||state.day||'astazi').replace(/\s+/g,'_')}.json`;
+  download(name,'application/json',JSON.stringify(data,null,2));
+};
+el.settingsUI.loadTripInput.addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(data?.today && data?.history){
+      localStorage.setItem(LS_DAY, JSON.stringify(data.today));
+      localStorage.setItem(LS_LOG, JSON.stringify(data.history));
+      if (data.meta){
+        settings.driverName = data.meta.driverName || settings.driverName;
+        settings.truckId    = data.meta.truckId    || settings.truckId;
+        settings.trailerId  = data.meta.trailerId  || settings.trailerId;
+        settings.routeName  = data.meta.routeName  || settings.routeName;
+        saveSettings();
+      }
+      state = loadState();
+      fillSettingsUI();
+      alert('Cursa a fost încărcată.');
+      render();
+    } else {
+      alert('Fișier invalid.');
+    }
+  }catch(err){ alert('Eroare la încărcare.'); }
+  e.target.value='';
+});
+el.settingsUI.wipeAllBtn.onclick = ()=>{
+  if(!confirm('Sigur vrei să ștergi toate datele locale (ziua curentă, istoric, setări)?')) return;
+  localStorage.removeItem(LS_DAY);
+  localStorage.removeItem(LS_LOG);
+  const keepAlerts = !!settings.alerts;
+  localStorage.removeItem(LS_SET);
+  settings.alerts = keepAlerts;
+  settings.driverName = settings.truckId = settings.trailerId = settings.routeName = '';
+  saveSettings();
+  state = loadState();
+  fillSettingsUI();
+  render();
+};
+
+// Download helper
 function download(name,type,content){ const blob=new Blob([content],{type}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
 
 // ==== Tick & init ====
 setInterval(render, 1000);
 if ('serviceWorker' in navigator){
-  window.addEventListener('load', ()=> navigator.serviceWorker.register(`${BASE_SCOPE}sw.js`, { scope: BASE_SCOPE || '/' }).catch(console.error));
+  window.addEventListener('load', ()=> navigator.serviceWorker.register(`${BASE_SCOPE}sw.js`, { scope: BASE_SCOPE }).catch(console.error));
 }
-document.addEventListener('visibilitychange', ()=>{ endOfDayIfChanged(); render(); });
-(async ()=>{ if(settings.alerts) await ensurePermission(); render(); })();
+document.addEventListener('visibilitychange', ()=>{ const day=todayKey(); if(day!==state.day){ archiveDay(state); state=blankDay(day); localStorage.setItem(LS_DAY, JSON.stringify(state)); } render(); });
+
+(async ()=>{ if(settings.alerts) await ensurePermission(); fillSettingsUI(); render(); })();
