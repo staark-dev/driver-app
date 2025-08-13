@@ -608,7 +608,7 @@ function highlightLogsForDay(dayIso){
   tbl.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function renderLog(){
+/*function renderLog(){
   const list = [...state.events];
   if (state.current){
     list.push({ type: state.current.type, start: state.current.startAt, end: Date.now() });
@@ -619,6 +619,66 @@ function renderLog(){
     const start = new Date(e.start).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
     return `<tr><td>${start}</td><td>${e.type}</td><td class="mono">${hhmm}</td></tr>`;
   }).join('');
+}*/
+
+function renderLog(){
+  // construim lista: evenimente încheiate + evenimentul curent până în prezent
+  const list = [...state.events];
+  if (state.current){
+    list.push({ type: state.current.type, start: state.current.startAt, end: Date.now() });
+  }
+
+  const tbody = document.getElementById('logTable');
+  const empty = document.getElementById('logEmpty');
+  const totalEl = document.getElementById('logTotalDur');
+
+  if (!tbody) return;
+
+  if (!list.length){
+    tbody.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    if (totalEl) totalEl.textContent = 'Total: 0:00';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+
+  const fmtClock = (ms)=> new Date(ms).toLocaleTimeString('ro-RO', { hour:'2-digit', minute:'2-digit' });
+
+  const typeBadge = (t)=>{
+    const map = {
+      drive: { cls:'badge-drive', label:'Condus',   icon:'M3 12h18M12 3v18' },   // volan stilizat simplu (linie cruce)
+      break: { cls:'badge-break', label:'Pauză',    icon:'M7 4v16M17 4v16' },   // pauză || 
+      work:  { cls:'badge-work',  label:'Muncă',    icon:'M4 7h16v10H4z' }      // „cutie”
+    };
+    const {cls,label,icon} = map[t] || { cls:'', label:t, icon:'M4 12h16' };
+    return `
+      <span class="badge ${cls}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="${icon}" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+        ${label}
+      </span>
+    `;
+  };
+
+  let totalMs = 0;
+  const rows = list.map(e=>{
+    const dur = Math.max(0, (e.end || Date.now()) - e.start);
+    totalMs += dur;
+    const start = fmtClock(e.start);
+    const stop  = e.end ? fmtClock(e.end) : '—';
+    const hhmm  = fmtHM(dur);
+    return `<tr>
+      <td class="mono">${start}</td>
+      <td class="mono">${stop}</td>
+      <td class="mono"><strong>${hhmm}</strong></td>
+      <td>${typeBadge(e.type)}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML = rows;
+  if (totalEl) totalEl.textContent = `Total: ${fmtHM(totalMs)}`;
+  document.querySelector('.log-title').textContent = `Jurnal (${new Date(state.day).toLocaleDateString('ro-RO')})`;
 }
 
 function updateActionButtons(){
