@@ -108,6 +108,31 @@
             <input id="importJsonInput" type="file" accept="application/json" hidden>
           </label>
         </div>
+
+        <div class="log-card">
+          <div class="log-head">
+            <div>
+              <div class="log-title">Jurnal (azi)</div>
+              <div class="log-sub">Evenimente în ordine cronologică</div>
+            </div>
+            <div class="log-meta mono" id="logTotalDur">Total: 0:00</div>
+          </div>
+        
+          <table class="table log-table">
+            <thead>
+              <tr>
+                <th>Start</th>
+                <th>Stop</th>
+                <th>Durată</th>
+                <th>Tip</th>
+              </tr>
+            </thead>
+            <tbody id="logTable"></tbody>
+          </table>
+        
+          <div id="logEmpty" class="log-empty muted">Nu există încă activități înregistrate.</div>
+        </div>
+        
         <div class="controls-line">
           <button id="btnDet7" class="chip">Ultimele 7 zile</button>
           <button id="btnDet30" class="chip">Ultimele 30</button>
