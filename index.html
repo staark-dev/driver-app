@@ -22,16 +22,11 @@
       font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";
     }
     .wrap{ max-width:1100px; margin:0 auto; padding:24px; }
-    .card{
-      background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:20px;
-      box-shadow: 0 1px 2px rgba(0,0,0,.04);
-    }
+    .card{ background:#fff; border:1px solid #e5e7eb; border-radius:16px; padding:20px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
     .row{ display:flex; gap:24px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
     .left{ display:flex; align-items:center; gap:16px; }
     .gauge{ position:relative; width:180px; height:180px; }
-    .center{
-      position:absolute; inset:0; display:grid; place-items:center; text-align:center;
-    }
+    .center{ position:absolute; inset:0; display:grid; place-items:center; text-align:center; }
     .label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
     .big{ font-size:40px; font-weight:600; }
     .right h2{ margin:0 0 6px 0; font-size:13px; color:#374151; }
@@ -40,31 +35,52 @@
     .barrow{ display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; }
     .barbg{ height:8px; background:var(--barbg); border-radius:999px; overflow:hidden; }
     .barfg{ height:8px; border-radius:999px; }
-    .dots{ display:inline-flex; gap:4px; }
-    .dot{ width:8px; height:8px; background:var(--warn); border-radius:999px; display:inline-block; }
     .legend{ margin-top:12px; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px; }
     .swatch{ width:10px; height:10px; border-radius:2px; display:inline-block; }
+
     .tabs{ margin-top:16px; border-top:1px solid #e5e7eb; padding-top:12px; display:flex; gap:8px; justify-content:space-around; }
-    .btn{ border-radius:8px; padding:8px 12px; border:1px solid transparent; background:#f3f4f6; color:#111827; cursor:pointer; }
-    .btn.primary{ background:#111827; color:#fff; }
+    .btn{ border-radius:10px; padding:10px 12px; border:1px solid #e5e7eb; background:#f8fafc; color:#111827; cursor:pointer; min-width:110px; }
+    .btn:hover{ background:#eef2f7; }
+    .btn.primary{ background:#111827; color:#fff; border-color:#111827; }
     .muted{ color:var(--muted); }
     .mono{ font-variant-numeric: tabular-nums; font-feature-settings:"tnum" 1; }
+
+    .controls{ display:flex; flex-wrap:wrap; gap:10px; margin:16px 0 8px; }
+    .pill{ border-radius:999px; padding:6px 10px; font-size:12px; border:1px solid #e5e7eb; }
+    .status{ display:flex; align-items:center; gap:8px; }
+
+    /* tab sections */
+    .tabpanel{ display:none; margin-top:14px; }
+    .tabpanel.active{ display:block; }
+
+    table{ width:100%; border-collapse:collapse; }
+    th, td{ padding:8px 10px; border-bottom:1px solid #e5e7eb; text-align:left; }
+    th{ font-size:12px; color:#475569; text-transform:uppercase; letter-spacing:.04em; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <section class="card" aria-label="Asistență timp condus">
+      <header class="status">
+        <span class="pill">Stare: <strong id="stateLabel">inactiv</strong></span>
+        <span class="pill">Ziua: <span id="dayLabel"></span></span>
+      </header>
+
+      <div class="controls">
+        <button id="btnStartDrive" class="btn primary">Începe condus</button>
+        <button id="btnBreak" class="btn">Pauză</button>
+        <button id="btnWork" class="btn">Muncă</button>
+        <button id="btnStop" class="btn">Termină</button>
+      </div>
+
       <div class="row">
         <!-- STÂNGA: gauge -->
         <div class="left">
           <div class="gauge" aria-label="Timp condus">
             <svg id="gaugeSvg" width="180" height="180" viewBox="0 0 180 180" role="img" aria-hidden="true">
-              <!-- fundal -->
               <circle cx="90" cy="90" r="78" fill="none" stroke="#EEF2F7" stroke-width="12"></circle>
-              <!-- progres -->
               <circle id="gaugeProg" cx="90" cy="90" r="78" fill="none" stroke="#0EA5E9" stroke-width="12"
                       stroke-linecap="round" stroke-dasharray="0 1000" transform="rotate(-90 90 90)"></circle>
-              <!-- marker 4h30 -->
               <circle id="marker" cx="90" cy="12" r="4" fill="#F59E0B"></circle>
             </svg>
             <div class="center">
@@ -89,7 +105,7 @@
             <li class="barrow">
               <span class="muted">Condus</span>
               <div class="barbg"><div id="barDrive" class="barfg"></div></div>
-              <div><span id="barDriveVal" class="mono">0:00</span> <span class="dots" title="Marcaje"><span class="dot"></span><span class="dot"></span></span></div>
+              <div><span id="barDriveVal" class="mono">0:00</span></div>
             </li>
             <li class="barrow">
               <span class="muted">Pauze</span>
@@ -97,17 +113,17 @@
               <div><span id="barBreakVal" class="mono">0:00</span></div>
             </li>
             <li class="barrow">
-              <span class="muted">Lucru total</span>
+              <span class="muted">Muncă total</span>
               <div class="barbg"><div id="barWork" class="barfg"></div></div>
               <div><span id="barWorkVal" class="mono">0:00</span></div>
             </li>
             <li class="barrow">
-              <span class="muted">Rămas săpt.</span>
+              <span class="muted">Săptămână</span>
               <div class="barbg"><div id="barW1" class="barfg"></div></div>
               <div><span id="barW1Val" class="mono">0:00</span></div>
             </li>
             <li class="barrow">
-              <span class="muted">Rămas 2 săpt.</span>
+              <span class="muted">2 săptămâni</span>
               <div class="barbg"><div id="barW2" class="barfg"></div></div>
               <div><span id="barW2Val" class="mono">0:00</span></div>
             </li>
@@ -120,79 +136,312 @@
         </div>
       </div>
 
-      <div class="tabs">
-        <button class="btn primary">Zilnic</button>
-        <button class="btn">Săptămânal</button>
-        <button class="btn">Detalii</button>
+      <!-- Tabs -->
+      <nav class="tabs" role="tablist" aria-label="Mod afișare">
+        <button class="btn primary" role="tab" aria-selected="true" data-tab="daily">Zilnic</button>
+        <button class="btn" role="tab" aria-selected="false" data-tab="weekly">Săptămânal</button>
+        <button class="btn" role="tab" aria-selected="false" data-tab="details">Detalii</button>
+      </nav>
+
+      <!-- Panouri -->
+      <div id="tab-daily" class="tabpanel active" role="tabpanel" aria-labelledby="Zilnic">
+        <p class="muted">Afișează indicatorii pentru ziua curentă.</p>
+      </div>
+
+      <div id="tab-weekly" class="tabpanel" role="tabpanel" aria-labelledby="Săptămânal">
+        <table>
+          <thead><tr><th>Zi</th><th>Condus</th><th>Muncă</th><th>Pauză</th></tr></thead>
+          <tbody id="weekTable"></tbody>
+        </table>
+      </div>
+
+      <div id="tab-details" class="tabpanel" role="tabpanel" aria-labelledby="Detalii">
+        <table>
+          <thead><tr><th>Ora</th><th>Tip</th><th>Durata</th></tr></thead>
+          <tbody id="logTable"></tbody>
+        </table>
       </div>
     </section>
   </div>
 
   <script>
-    // ---- Ajutătoare timp
+    // ---------- Utilitare timp ----------
     const H = (h,m=0) => (h*60+m)*60*1000;
-    const toHM = ms => {
+    const fmtHM = ms => {
       const totalMin = Math.max(0, Math.round(ms/60000));
       const h = Math.floor(totalMin/60);
       const m = String(totalMin%60).padStart(2,'0');
       return `${h}:${m}`;
     };
     const clamp = (v,min=0,max=1)=>Math.max(min,Math.min(max,v));
+    const todayKey = () => new Date().toLocaleDateString('sv-SE'); // YYYY-MM-DD
+    const nowISOhm = () => new Date().toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
 
-    // ---- Config demo (înlocuiește cu valorile tale reale)
-    const dailyLimitMs = H(9,0);          // 9h (sau 10h în zilele extinse)
-    const marker4h30Ms = H(4,30);
-    const drivenMs     = H(3,34);
-    const breakMs      = H(0,15);
-    const workMs       = H(5,5);
-    const weekUsedMs   = H(32,20);        // pentru barele "rămas"
-    const fortnUsedMs  = H(50,0);
+    // ---------- Reguli / limite ----------
+    const LIMITS = {
+      dailyDrive: H(9,0),      // 9h / zi (poți comuta la 10h când e zi extinsă)
+      marker4h30: H(4,30),
+      reqBreak:   H(0,45),
+      dailyWork:  H(6,0),
+      weekDrive:  H(56,0),
+      fortDrive:  H(90,0)
+    };
 
-    // ---- UI
-    const remainMs = Math.max(0, dailyLimitMs - drivenMs);
-    document.getElementById('drivenVal').textContent = toHM(drivenMs);
-    document.getElementById('remainVal').textContent = toHM(remainMs);
+    // ---------- Stare & stocare ----------
+    const LS_KEY_DAY  = 'ta-day';
+    const LS_KEY_LOGS = 'ta-logs'; // istoric zile [{day, totals, events}]
+    let state = loadState();
 
-    // Gauge
-    const r = 78, c = 2*Math.PI*r;
-    const p = clamp(drivenMs / dailyLimitMs);
-    const dash = `${c*p} ${c*(1-p)}`;
-    document.getElementById('gaugeProg').setAttribute('stroke-dasharray', dash);
-
-    // Marker 4h30 pe cerc
-    const ratioM = clamp(marker4h30Ms / dailyLimitMs);
-    const angle = 2*Math.PI*ratioM - Math.PI/2;
-    const x = 90 + r * Math.cos(angle);
-    const y = 90 + r * Math.sin(angle);
-    const marker = document.getElementById('marker');
-    marker.setAttribute('cx', x.toFixed(2));
-    marker.setAttribute('cy', y.toFixed(2));
-
-    // Bare (verde <80%, galben <100%, roșu >=100%)
-    function setBar(id, valueMs, targetMs){
-      const el = document.getElementById(id);
-      const ratio = clamp(valueMs/targetMs);
-      el.style.width = (ratio*100)+'%';
-      el.style.background = ratio < .8 ? 'var(--ok)' : (ratio < 1 ? 'var(--warn)' : 'var(--bad)');
+    function blankDay(day){
+      return {
+        day,
+        current: null, // { type:'drive'|'break'|'work', startAt:number }
+        totals: { drive:0, break:0, work:0 },
+        events: [] // { type, start, end }
+      };
     }
-    setBar('barDrive', drivenMs, marker4h30Ms);
-    setBar('barBreak', breakMs, H(0,45));
-    setBar('barWork',  workMs,  H(6,0));
-    setBar('barW1',    weekUsedMs, H(56,0));
-    setBar('barW2',    fortnUsedMs, H(90,0));
 
-    document.getElementById('barDriveVal').textContent = toHM(drivenMs);
-    document.getElementById('barBreakVal').textContent = toHM(breakMs);
-    document.getElementById('barWorkVal').textContent  = toHM(workMs);
-    document.getElementById('barW1Val').textContent    = toHM(weekUsedMs);
-    document.getElementById('barW2Val').textContent    = toHM(fortnUsedMs);
+    function loadState(){
+      const saved = JSON.parse(localStorage.getItem(LS_KEY_DAY) || 'null');
+      const day = todayKey();
+      // rollover zi
+      if (!saved || saved.day !== day){
+        if (saved) archiveDay(saved);
+        const fresh = blankDay(day);
+        localStorage.setItem(LS_KEY_DAY, JSON.stringify(fresh));
+        return fresh;
+      }
+      return saved;
+    }
 
-    // PWA: înregistrează SW sub /truck-app/
+    function saveState(){
+      localStorage.setItem(LS_KEY_DAY, JSON.stringify(state));
+    }
+
+    function archiveDay(dayObj){
+      // finalizează sesiunea curentă, dacă exista
+      if (dayObj.current){
+        const now = Date.now();
+        const {type, startAt} = dayObj.current;
+        dayObj.events.push({type, start:startAt, end:now});
+        dayObj.totals[type] += now - startAt;
+        dayObj.current = null;
+      }
+      const logs = JSON.parse(localStorage.getItem(LS_KEY_LOGS) || '[]');
+      // scoate eventual dubluri pentru aceeași zi
+      const withoutSame = logs.filter(x => x.day !== dayObj.day);
+      withoutSame.push({ day: dayObj.day, totals: dayObj.totals, events: dayObj.events });
+      // păstrează doar 30 de zile
+      withoutSame.sort((a,b)=>a.day.localeCompare(b.day));
+      const trimmed = withoutSame.slice(-30);
+      localStorage.setItem(LS_KEY_LOGS, JSON.stringify(trimmed));
+    }
+
+    // ---------- Mașina de stări ----------
+    function start(type){
+      if (state.current && state.current.type === type) return;
+      stopCurrent(); // închide ce era
+      state.current = { type, startAt: Date.now() };
+      saveState();
+      render();
+    }
+
+    function stopCurrent(){
+      if (!state.current) return;
+      const now = Date.now();
+      const { type, startAt } = state.current;
+      const delta = Math.max(0, now - startAt);
+      state.totals[type] += delta;
+      state.events.push({ type, start:startAt, end:now });
+      state.current = null;
+      saveState();
+    }
+
+    function endDay(){
+      stopCurrent();
+      archiveDay(state);
+      state = blankDay(todayKey());
+      saveState();
+      render();
+    }
+
+    // ---------- UI: gauge + bare ----------
+    const el = {
+      stateLabel: document.getElementById('stateLabel'),
+      dayLabel:   document.getElementById('dayLabel'),
+      drivenVal:  document.getElementById('drivenVal'),
+      remainVal:  document.getElementById('remainVal'),
+      gaugeProg:  document.getElementById('gaugeProg'),
+      marker:     document.getElementById('marker'),
+      bars: {
+        drive:  document.getElementById('barDrive'),
+        break:  document.getElementById('barBreak'),
+        work:   document.getElementById('barWork'),
+        w1:     document.getElementById('barW1'),
+        w2:     document.getElementById('barW2')
+      },
+      barVals: {
+        drive: document.getElementById('barDriveVal'),
+        break: document.getElementById('barBreakVal'),
+        work:  document.getElementById('barWorkVal'),
+        w1:    document.getElementById('barW1Val'),
+        w2:    document.getElementById('barW2Val')
+      },
+      weekTable: document.getElementById('weekTable'),
+      logTable:  document.getElementById('logTable')
+    };
+
+    function colorByRatio(r){ return r<.8 ? 'var(--ok)' : (r<1 ? 'var(--warn)' : 'var(--bad)'); }
+
+    function setBar(elBar, valueMs, targetMs){
+      const ratio = clamp(targetMs ? valueMs/targetMs : 0);
+      elBar.style.width = (ratio*100)+'%';
+      elBar.style.background = colorByRatio(ratio);
+    }
+
+    function render(){
+      // status
+      el.stateLabel.textContent = state.current ? state.current.type : 'inactiv';
+      el.dayLabel.textContent = state.day;
+
+      // calcule curente (inclusiv sesiune deschisă)
+      const now = Date.now();
+      const cur = { ...state.totals };
+      if (state.current){
+        cur[state.current.type] += Math.max(0, now - state.current.startAt);
+      }
+
+      // gauge condus + rămas
+      const drive = cur.drive;
+      const remain = Math.max(0, LIMITS.dailyDrive - drive);
+      el.drivenVal.textContent = fmtHM(drive);
+      el.remainVal.textContent = fmtHM(remain);
+
+      // cerc
+      const r = 78, c = 2*Math.PI*r;
+      const p = clamp(drive / LIMITS.dailyDrive);
+      el.gaugeProg.setAttribute('stroke-dasharray', `${c*p} ${c*(1-p)}`);
+
+      // marker 4:30
+      const ratioM = clamp(LIMITS.marker4h30 / LIMITS.dailyDrive);
+      const angle = 2*Math.PI*ratioM - Math.PI/2;
+      const x = 90 + r*Math.cos(angle), y = 90 + r*Math.sin(angle);
+      el.marker.setAttribute('cx', x.toFixed(2));
+      el.marker.setAttribute('cy', y.toFixed(2));
+
+      // bare zi
+      setBar(el.bars.drive, drive, LIMITS.marker4h30);
+      setBar(el.bars.break, cur.break, LIMITS.reqBreak);
+      setBar(el.bars.work,  cur.work,  LIMITS.dailyWork);
+      el.barVals.drive.textContent = fmtHM(drive);
+      el.barVals.break.textContent = fmtHM(cur.break);
+      el.barVals.work.textContent  = fmtHM(cur.work);
+
+      // tabele (săpt./detalii)
+      renderWeekly();
+      renderLog();
+
+      // bare săptamână / 2 săpt. (din istoric + ziua curentă)
+      const {weekDrive, fortDrive} = sumWindows(cur.drive);
+      setBar(el.bars.w1, weekDrive, LIMITS.weekDrive);
+      setBar(el.bars.w2, fortDrive, LIMITS.fortDrive);
+      el.barVals.w1.textContent = fmtHM(weekDrive);
+      el.barVals.w2.textContent = fmtHM(fortDrive);
+    }
+
+    function getLogs(){ return JSON.parse(localStorage.getItem(LS_KEY_LOGS) || '[]'); }
+
+    function sumWindows(todayDriveMs){
+      const logs = getLogs();
+      const days = [...logs, {day: state.day, totals: {...state.totals}}]; // fără sesiunea curentă adăugată, dar pentru drive o adăugăm manual
+      // adăugăm și drive-ul în curs
+      const nowDriveExtra = state.current && state.current.type==='drive' ? (Date.now()-state.current.startAt) : 0;
+      days[days.length-1].totals.drive += nowDriveExtra;
+
+      const lastN = (n) => {
+        const pick = days.slice(-n);
+        return pick.reduce((acc,d)=>acc + (d.totals?.drive||0), 0);
+      };
+      return { weekDrive: lastN(7), fortDrive: lastN(14) };
+    }
+
+    function renderWeekly(){
+      const logs = getLogs();
+      const rows = [...logs, { day: state.day, totals: calcTotalsWithCurrent() }].slice(-7);
+      el.weekTable.innerHTML = rows.map(r=>{
+        const t = r.totals;
+        return `<tr>
+          <td>${r.day}</td>
+          <td class="mono">${fmtHM(t.drive||0)}</td>
+          <td class="mono">${fmtHM(t.work||0)}</td>
+          <td class="mono">${fmtHM(t.break||0)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    function calcTotalsWithCurrent(){
+      const now = Date.now();
+      const t = {...state.totals};
+      if (state.current){
+        t[state.current.type] += Math.max(0, now - state.current.startAt);
+      }
+      return t;
+    }
+
+    function renderLog(){
+      const list = [...state.events];
+      if (state.current){
+        list.push({ type: state.current.type, start: state.current.startAt, end: Date.now() });
+      }
+      el.logTable.innerHTML = list.map(e=>{
+        const dur = Math.max(0, (e.end||Date.now()) - e.start);
+        const hhmm = fmtHM(dur);
+        const start = new Date(e.start).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+        return `<tr><td>${start}</td><td>${e.type}</td><td class="mono">${hhmm}</td></tr>`;
+      }).join('');
+    }
+
+    // ---------- Tab-uri ----------
+    const tabButtons = document.querySelectorAll('[role="tab"]');
+    const tabPanels = {
+      daily:   document.getElementById('tab-daily'),
+      weekly:  document.getElementById('tab-weekly'),
+      details: document.getElementById('tab-details')
+    };
+    tabButtons.forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        tabButtons.forEach(b=>{ b.classList.remove('primary'); b.setAttribute('aria-selected','false'); });
+        btn.classList.add('primary'); btn.setAttribute('aria-selected','true');
+        Object.values(tabPanels).forEach(p=>p.classList.remove('active'));
+        tabPanels[btn.dataset.tab].classList.add('active');
+      });
+    });
+
+    // ---------- Butoane ----------
+    document.getElementById('btnStartDrive').onclick = ()=> start('drive');
+    document.getElementById('btnBreak').onclick      = ()=> start('break');
+    document.getElementById('btnWork').onclick       = ()=> start('work');
+    document.getElementById('btnStop').onclick       = ()=>{
+      if (confirm('Termini sesiunea curentă?')) stopCurrent(), render();
+    };
+
+    // ---------- Tick vizual (1s, fără drift de calcul) ----------
+    setInterval(render, 1000);
+
+    // ---------- Init ----------
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/truck-app/sw.js', { scope: '/truck-app/' }).catch(console.error);
       });
     }
+    // rollover zilnic la schimbarea datei (la vizibilitate)
+    document.addEventListener('visibilitychange', ()=>{
+      const day = todayKey();
+      if (day !== state.day){ archiveDay(state); state = blankDay(day); saveState(); }
+      render();
+    });
+
+    render();
   </script>
 </body>
 </html>
