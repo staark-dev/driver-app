@@ -1,0 +1,18 @@
+{
+  "name": "Program Șofer",
+  "short_name": "Șofer",
+  "start_url": "/truck-app/?pwa=1",
+  "scope": "/truck-app/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0EA5E9",
+  "icons": [
+    { "src": "/truck-app/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/truck-app/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ],
+  "shortcuts": [
+    { "name": "Start", "url": "/truck-app/?action=start" },
+    { "name": "Pauză", "url": "/truck-app/?action=break" },
+    { "name": "Export", "url": "/truck-app/?action=export" }
+  ]
+}
