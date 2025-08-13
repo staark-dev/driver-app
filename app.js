@@ -42,13 +42,26 @@ function saveSettings(){ localStorage.setItem(LS_SET, JSON.stringify(settings));
 function blankDay(day){
   return {
     day,
+    startAt: null,            // <— adăugat
     current: null,                 // { type:'drive'|'break'|'work', startAt:number }
-    totals: { drive:0, break:0, work:0 },
+    totals: { 
+      drive: 0, 
+      break: 0, 
+      work: 0 
+    },
     events: [],                    // { type, start, end }
     sessionDriveMs: 0,             // condus de la ultima pauză ≥45'
     extended: false,               // zi extinsă 10h
-    notifyFlags: { session45:false, dailyMax:false }
+    notifyFlags: { session45: false, dailyMax: false }
   };
+}
+
+function start(type) {
+  stopCurrent();
+  const now = Date.now();
+  if (!state.startAt) state.startAt = now;   // <— salvează ora de start a zilei
+  state.current = { type, startAt: now };
+  saveState(); render();
 }
 
 function archiveDay(dayObj){
@@ -185,7 +198,7 @@ function sumWindows(){
 }
 
 // ==== Mașina de stări ====
-function start(type){ stopCurrent(); state.current={type, startAt: Date.now()}; saveState(); render(); }
+//function start(type){ stopCurrent(); state.current={type, startAt: Date.now()}; saveState(); render(); }
 function stopCurrent(){
   if (!state.current) return;
   const now=Date.now();
