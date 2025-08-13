@@ -24,7 +24,7 @@ body{
 .right h2{ margin:0 0 6px 0; font-size:13px; color:#374151; }
 .remain{ font-size:32px; font-weight:600; }
 ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direction:column; gap:10px; }
-.barrow{ display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; }
+.barrow{ display:grid; grid-template-columns:0.4fr 1fr auto; gap:10px; align-items:center; }
 /*.barbg{ height:8px; background:var(--barbg); border-radius:999px; overflow:hidden; }
 .barfg{ height:8px; border-radius:999px; }*/
 .barbg {
@@ -37,7 +37,7 @@ ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direc
 .barfg {
   height: 100%;
   border-radius: 999px;
-  min-width: 10%; /* barele foarte mici vor avea min. 10% */
+  min-width: 0%; /* barele foarte mici vor avea min. 10% */
   display: flex;
   align-items: center;
   justify-content: center;
