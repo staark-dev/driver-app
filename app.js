@@ -77,22 +77,29 @@ function selectMainTab(tabName) {
   document.querySelectorAll('.tabpanel')
     .forEach(panel => panel.classList.remove('active'));
 
+  console.log("TabName primit:", tabName);
+  console.log("ID căutat:", 'tab-' + tabName);
+  console.log("Element găsit:", document.getElementById('tab-' + tabName));
+  
   // afișăm doar panoul selectat
   const activePanel = document.getElementById('tab-' + tabName);
+  
   if (activePanel) {
     activePanel.classList.add('active');
     // ascunde/afișează .row în funcție de tab
     document.body.setAttribute('data-tab', tabName);
+    
     const rowSection = document.querySelector('.row');
+    console.log("Se aplică restricție pe:", rowSection);
+    
+    if (['details', 'weekly', 'settings'].includes(tabName)) {
+      if (rowSection) rowSection.style.display = 'none';
+    } else {
+      if (rowSection) rowSection.style.display = '';
+    }
     
     console.log("Sa selectat: ", activePanel);
     console.log("Se aplica restrictie pe: ", rowSection);
-
-    if (tabName === 'details' || tabName === 'weekly' || tabName === 'settings') {
-      rowSection.style.display = 'none';
-    } else {
-      rowSection.style.display = '';
-    }
   }
 }
 
