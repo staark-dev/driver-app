@@ -108,6 +108,15 @@
             <input id="importJsonInput" type="file" accept="application/json" hidden>
           </label>
         </div>
+        <div class="controls-line">
+          <button id="btnDet7" class="chip">Ultimele 7 zile</button>
+          <button id="btnDet30" class="chip">Ultimele 30</button>
+          <button id="btnDetAll" class="chip">Toate</button>
+          <input id="detSearch" class="input-search" placeholder="Caută: condus / pauză / muncă..." />
+          <button id="btnExportCSVFull" class="chip">⬇️ Export CSV (toate)</button>
+        </div>
+        
+        <div id="detailsContainer"></div>
         <table>
           <thead><tr><th>Ora</th><th>Tip</th><th>Durata</th></tr></thead>
           <tbody id="logTable"></tbody>
