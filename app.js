@@ -281,6 +281,7 @@ function renderWeeklyCards(){
       <div class="day-card">
         <div class="day-header">
           <div class="day-badge">${dateStr}</div>
+          <div class="start-time">Start: ${startTime}</div>
           <div class="day-dots">
             ${ext?'<span class="dot-or" title="Zi extinsă 10h"></span>':''}
             ${longBreak?'<span class="dot-bl" title="Pauze ≥ 45 min"></span>':''}
@@ -300,7 +301,7 @@ function renderWeeklyCards(){
     `;
   }).join('');
 
-  const {weekDrive, fortDrive} = sumWindows();
+  const { weekDrive, fortDrive } = sumWindows();
   q('#sum7').textContent = fmtHM(weekDrive);
   q('#sum14').textContent = fmtHM(fortDrive);
 }
