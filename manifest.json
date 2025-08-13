@@ -1,19 +1,19 @@
 {
   "name": "Program Șofer",
   "short_name": "Șofer",
-  "start_url": "/?pwa=1",
-  "scope": "/",
+  "start_url": "./?pwa=1",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0EA5E9",
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "Zilnic", "url": "/?tab=daily" },
-    { "name": "Săptămână", "url": "/?tab=weekly" },
-    { "name": "Detalii", "url": "/?tab=details" },
-    { "name": "Setări", "url": "/?tab=settings" }
+    { "name": "Zilnic", "url": "./?tab=daily" },
+    { "name": "Săptămână", "url": "./?tab=weekly" },
+    { "name": "Detalii", "url": "./?tab=details" },
+    { "name": "Setări", "url": "./?tab=settings" }
   ]
 }
