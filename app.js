@@ -79,6 +79,7 @@ function selectMainTab(tabName) {
 
   // afișăm doar panoul selectat
   const activePanel = document.getElementById(tabName);
+  console.log("Tabel activ: ", tabName);
   if (activePanel) activePanel.classList.add('active');
 }
 
