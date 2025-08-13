@@ -111,10 +111,42 @@
           <tbody id="logTable"></tbody>
         </table>
       </div>
+
+      <!-- SETĂRI -->
+      <div id="tab-settings" class="tabpanel" role="tabpanel" aria-labelledby="Setări">
+        <div class="form">
+          <div class="field">
+            <label for="inpDriver" class="label">Șofer</label>
+            <input id="inpDriver" class="input" type="text" placeholder="nume șofer">
+          </div>
+          <div class="field">
+            <label for="inpTruck" class="label">Camion</label>
+            <input id="inpTruck" class="input" type="text" placeholder="ex: B-12-ABC / cod flotă">
+          </div>
+          <div class="field">
+            <label for="inpTrailer" class="label">Remorcă</label>
+            <input id="inpTrailer" class="input" type="text" placeholder="opțional">
+          </div>
+          <div class="field">
+            <label for="inpRoute" class="label">Nume cursă</label>
+            <input id="inpRoute" class="input" type="text" placeholder="ex: RO→DE 13.08">
+          </div>
+        </div>
+
+        <div class="controls" style="margin-top:10px">
+          <button id="btnSaveTrip" class="chip">💾 Salvează cursa</button>
+          <label class="chip" style="cursor:pointer;">📂 Încarcă cursa
+            <input id="loadTripInput" type="file" accept="application/json" hidden>
+          </label>
+          <button id="btnWipeAll" class="chip" title="Șterge tot ce e salvat în acest dispozitiv">🗑️ Resetare date</button>
+        </div>
+
+        <p class="muted">Setările și informațiile de cursă se salvează local pe dispozitiv. „Salvează cursa” exportă un fișier JSON (meta + timpi), „Încarcă cursa” reface acele date.</p>
+      </div>
     </section>
   </div>
 
-  <!-- MENIU PRINCIPAL JOS: Zilnic / Săptămână / Detalii -->
+  <!-- MENIU PRINCIPAL JOS: Zilnic / Săptămână / Detalii / Setări -->
   <footer class="mobile-nav" role="tablist" aria-label="Meniu principal">
     <div class="mobile-actions">
       <button class="action" role="tab" aria-selected="true" data-tab="daily"  title="Zilnic">
@@ -129,9 +161,13 @@
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1 15h-2v-6h2v6Zm0-8h-2V7h2v2Z"/></svg>
         <span>Detalii</span>
       </button>
+      <button class="action" role="tab" aria-selected="false" data-tab="settings" title="Setări">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8Zm8.94 4.5a7.94 7.94 0 0 0-.16-1.6l2.11-1.65-1.99-3.45-2.57 1a8.07 8.07 0 0 0-2.77-1.61l-.4-2.7H9.84l-.4 2.7a8.07 8.07 0 0 0-2.77 1.6l-2.57-1L2.1 9.25l2.1 1.65c-.07.52-.11 1.06-.11 1.6s.04 1.08.11 1.6l-2.1 1.65 1.99 3.45 2.57-1a8.07 8.07 0 0 0 2.77 1.61l.4 2.7h4.72l.4-2.7a8.07 8.07 0 0 0 2.77-1.61l2.57 1 1.99-3.45-2.11-1.65c.1-.52.16-1.06.16-1.6Z"/></svg>
+        <span>Setări</span>
+      </button>
     </div>
   </footer>
 
-  <script src="app.js" defer></script>
+  <script src="/app.js" defer></script
 </body>
 </html>
