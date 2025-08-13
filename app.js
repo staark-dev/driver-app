@@ -275,7 +275,13 @@ function renderWeeklyCards(){
     const longBreak = (t.break||0) >= LIMITS.reqBreak;
     const ext = !!d.extended;
 
+    // Data în format românesc
     const dateStr = new Date(d.day).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
+    // Ora de start (dacă o ai salvată în meta sau alt câmp)
+    const startTime = d.startAt
+      ? new Date(d.startAt).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
+      : '--:--';
     
     return `
       <div class="day-card">
