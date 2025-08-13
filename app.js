@@ -42,7 +42,7 @@ function saveSettings(){ localStorage.setItem(LS_SET, JSON.stringify(settings));
 function blankDay(day){
   return {
     day,
-    startAt: null,            // <— adăugat
+    startAt: null,                  // <— adăugat
     current: null,                 // { type:'drive'|'break'|'work', startAt:number }
     totals: { 
       drive: 0, 
@@ -81,9 +81,11 @@ function selectMainTab(tabName) {
   const activePanel = document.getElementById('tab-' + tabName);
   if (activePanel) activePanel.classList.add('active');
 
-    // ascunde/afișează .row în funcție de tab
+  // ascunde/afișează .row în funcție de tab
+  document.body.setAttribute('data-tab', tabName);
   const rowSection = document.querySelector('.row');
-  if (tabName === 'tab-details' || tabName === 'tab-weekly' || tabName === 'tab-settings') {
+  
+  if (tabName === 'details' || tabName === 'weekly' || tabName === 'settings') {
     rowSection.style.display = 'none';
   } else {
     rowSection.style.display = '';
