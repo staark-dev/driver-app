@@ -267,54 +267,91 @@ function render(){
 
 function renderWeeklyCards(){
   const logs = getLogs();
-  const days = [...logs, { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended }]
-    .slice(-7)
-    .sort((a, b) => new Date(a.day) - new Date(b.day));
-  el.weekGrid.innerHTML = days.map((d,i)=>{
-    const t = d.totals || { drive: 0, work: 0, break: 0 };
-    const longBreak = ( t.break || 0) >= LIMITS.reqBreak;
+  // compunem lista: ultimele zile arhivate + azi (cu tot cu startAt dacă există)
+  const days = [...logs, {
+    day: state.day,
+    totals: calcTotalsWithCurrent(),
+    extended: state.extended,
+    startAt: state.startAt || null
+  }];
+
+  // păstrăm doar ultimele 7 și ordonăm descrescător după dată (cel mai recent ultimul)
+  const last7 = days.slice(-7).sort((a, b) => new Date(a.day) - new Date(b.day));
+
+  // pentru calculul pauzei zilnice avem nevoie și de startAt din ziua următoare
+  const H = (h,m=0)=> (h*60+m)*60*1000;
+
+  // helper: formatează data dd.mm.yyyy
+  const fmtDate = (iso) => new Date(iso).toLocaleDateString('ro-RO', {day:'2-digit', month:'2-digit', year:'numeric'});
+  const fmtTime = (ms)=> new Date(ms).toLocaleTimeString('ro-RO', {hour:'2-digit', minute:'2-digit'});
+  
+  //const days = [...logs, { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended }];
+  el.weekGrid.innerHTML = last7.map((d, idx) => {
+    const t = d.totals || { 
+      drive:0, 
+      break:0, 
+      work:0 
+    };
+    const longBreakInDay = (t.break || 0) >= LIMITS.reqBreak;
     const ext = !!d.extended;
 
     // Data în format românesc
     const dateStr = new Date(d.day).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+    // ora de start pentru această zi (dacă e salvată)
+    const startStr = d.startAt ? fmtTime(d.startAt) : '--:--';
     
-    // Ora de start (dacă o ai salvată în meta sau alt câmp)
-    const startTime = d.startAt
-      ? new Date(d.startAt).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
-      : '--:--';
+    // calcul PAUZĂ ZILNICĂ (odihnă): de la sfârșitul zilei curente până la startul zilei următoare
+    // Sfârșit zi = startAt + (drive + work + break). Dacă nu avem startAt, nu calculăm.
+    let restLabel = '--:--';
+    if (d.startAt) {
+      const endOfDay = d.startAt + (t.drive||0) + (t.work||0) + (t.break||0);
+
+      // găsește ziua următoare după data curentă
+      const iInAll = days.findIndex(x => x.day === d.day);
+      const nextDay = iInAll >= 0 ? days[iInAll + 1] : null;
+
+      if (nextDay && nextDay.startAt) {
+        const restMs = Math.max(0, nextDay.startAt - endOfDay);
+
+        // etichetăm 11h / 10h / 9h, altfel HH:MM
+        if (restMs >= H(11)) restLabel = '11h';
+        else if (restMs >= H(10)) restLabel = '10h';
+        else if (restMs >= H(9))  restLabel = '9h';
+        else restLabel = fmtHM(restMs);
+      }
+    }
     
     return `
       <div class="day-card">
         <div class="day-header">
-          <div class="day-badge">${i+1} <span class="date-time" style="margin-right: 20px; font-size: 10px; font-weight: 400;">${dateStr}</span></div>
+          <div class="day-badge">${idx+1}</div>
+          <div class="date-text">${fmtDate(d.day)}</div>
+          <div class="start-line">Start: <strong>${startStr}</strong></div>
+
           <div class="day-dots">
-            ${ext?'<span class="dot-or" title="Zi extinsă 10h"></span>':''}
-            ${longBreak?'<span class="dot-bl" title="Pauze ≥ 45 min"></span>':''}
+            ${ext ? '<span class="dot-or" title="Zi extinsă 10h"></span>' : ''}
+            ${longBreakInDay ? '<span class="dot-bl" title="Pauze ≥45′ în zi"></span>' : ''}
+            <span class="rest-chip" title="Pauza zilnică până la ziua următoare">${restLabel}</span>
           </div>
         </div>
         <div class="row-metric" title="Condus (total zi)">
           <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.75 6H4.25A8 8 0 0 1 12 4Zm-8 8h6a2 2 0 0 0 2-2h4a6 6 0 0 1-6 6H4a2 2 0 0 1-2-2Zm20 0a2 2 0 0 1-2 2h-4a6 6 0 0 1-6-6h4a2 2 0 0 0 2 2h6Z"/></svg>
-          <span class="metric-sub">🚗 Condus</span>
-          <span class="metric-val mono">${fmtHM(t.drive || 0)}</span>
-        </div>
-        
-        <div class="row-metric" title="Muncă total (zi)">
-          <svg viewBox="0 0 24 24"><path d="M4 3h2v18H4V3Zm3 2h9l-1.5 3L16 11H7V5Z"/></svg>
-          <span class="metric-sub">Pauza (${longBreak})</span>
-          <span class="metric-val mono">${fmtHM(d.break || 0)}</span>
+          <span class="metric-sub">Condus</span>
+          <span class="metric-val mono">${fmtHM(t.drive||0)}</span>
         </div>
 
-        <div class="row-metric" title="Start Program (total zi)">
-          <svg viewBox="0 0 24 24"><path d="M4 3h2v18H4V3Zm3 2h9l-1.5 3L16 11H7V5Z"/></svg>
-          <span class="metric-sub">Start</span>
-          <span class="metric-val mono">${startTime}</span>
+        <div class="row-metric" title="Pauză totală (zi)">
+          <svg viewBox="0 0 24 24"><path d="M6 3h4v18H6V3Zm8 0h4v18h-4V3Z"/></svg>
+          <span class="metric-sub">Pauză</span>
+          <span class="metric-val mono">${fmtHM(t.break||0)}</span>
         </div>
       </div>
     `;
   }).join('');
 
   const { weekDrive, fortDrive } = sumWindows();
-  q('#sum7').textContent = fmtHM(weekDrive);
+  q('#sum7').textContent  = fmtHM(weekDrive);
   q('#sum14').textContent = fmtHM(fortDrive);
 }
 
