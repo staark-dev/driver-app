@@ -292,52 +292,52 @@ function finishDay(){
 function renderWeeklyCards(){
   const logs = getLogs();
 
-  // index: zi -> obiect
+  // indexăm toate zilele cunoscute (inclusiv azi) după ISO day
   const byDay = {};
   logs.forEach(d => { byDay[d.day] = d; });
   byDay[state.day] = { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended, startAt: state.startAt || null };
 
-  // săptămâna curentă Duminică–Vineri (6 zile)
+  // Construim săptămâna curentă: Duminică (0) → Vineri (5)
   const today = new Date(state.day);
-  const dow = today.getDay(); // 0=Sun
+  const dow = today.getDay();        // 0=Sun
   const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - dow); // mută la duminică
+  weekStart.setDate(today.getDate() - dow);
+
+  const daysIso = Array.from({length:6}, (_,i)=>{
+    const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
+    return d.toLocaleDateString('sv-SE'); // YYYY-MM-DD
+  });
 
   // helperi
   const H = (h,m=0)=> (h*60+m)*60*1000;
   const fmtDate = iso => new Date(iso).toLocaleDateString('sv-SE',{day:'2-digit',month:'2-digit',year:'numeric'});
   const fmtClock = ms  => new Date(ms).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
 
+  // calculează repausul zilnic: (end-of-day) → (start următoare)
   function restInfoFor(iso){
     const cur = byDay[iso];
-    if (!cur || !cur.startAt) return { label:'--:--', cls:'rest-unk' };
+    if (!cur || !cur.startAt) return { label:'--:--', cls:'rest-unk', ms:0 };
 
-    const t = cur.totals || {drive:0,work:0,break:0};
+    const t = cur.totals || {drive:0, work:0, break:0};
     const endOfDay = cur.startAt + (t.drive||0) + (t.work||0) + (t.break||0);
 
-    const dtNext = new Date(iso);
-    dtNext.setDate(dtNext.getDate() + 1);
-    const nextIso = dtNext.toLocaleDateString('sv-SE');
-    const next = byDay[nextIso];
-    if (!next || !next.startAt) return { label:'--:--', cls:'rest-unk' };
+    const dNext = new Date(iso); dNext.setDate(dNext.getDate()+1);
+    const nextIso = dNext.toLocaleDateString('sv-SE');
+    const nxt = byDay[nextIso];
+    if (!nxt || !nxt.startAt) return { label:'--:--', cls:'rest-unk', ms:0 };
 
-    const restMs = Math.max(0, next.startAt - endOfDay);
-    if (restMs >= H(11)) return { label:'11h', cls:'rest-good' };
-    if (restMs >= H(10)) return { label:'10h', cls:'rest-mid' };
-    if (restMs >= H(9))  return { label:'9h',  cls:'rest-low' };
-    return { label: fmtHM(restMs), cls:'rest-low' };
+    const restMs = Math.max(0, nxt.startAt - endOfDay);
+    if (restMs >= H(11)) return { label:'11h', cls:'rest-good', ms:restMs };
+    if (restMs >= H(10)) return { label:'10h', cls:'rest-mid',  ms:restMs };
+    if (restMs >= H(9))  return { label:'9h',  cls:'rest-low',  ms:restMs };
+    return { label: fmtHM(restMs), cls:'rest-low', ms:restMs };
   }
 
-  // compunem cele 6 zile (Sun..Fri)
-  const daysIso = Array.from({length:6}, (_,i)=>{
-    const d = new Date(weekStart); d.setDate(weekStart.getDate()+i);
-    return d.toLocaleDateString('sv-SE');
-  });
-
+  // generează cardurile
   el.weekGrid.innerHTML = daysIso.map((iso, idx)=>{
     const rec = byDay[iso] || null;
-    const t = rec?.totals || { drive:0, break:0, work:0 };
-    const longBreakInDay = (t.break||0) >= LIMITS.reqBreak; // marcaj albastru (pauze ≥45' în zi)
+    const t   = rec?.totals || { drive:0, break:0, work:0 };
+    const longBreakInDay = (t.break||0) >= LIMITS.reqBreak; // pauze ≥45' în zi (marcaj albastru)
     const ext = !!rec?.extended;
     const startStr = rec?.startAt ? fmtClock(rec.startAt) : '--:--';
     const rest = restInfoFor(iso);
@@ -353,7 +353,7 @@ function renderWeeklyCards(){
           <div class="day-dots">
             ${ext ? '<span class="dot-or" title="Zi extinsă 10h"></span>' : ''}
             ${longBreakInDay ? '<span class="dot-bl" title="Pauze ≥45′ în zi"></span>' : ''}
-            <span class="rest-chip ${rest.cls}" title="Pauza de repaus (final zi → start zi următoare)">${rest.label}</span>
+            <span class="rest-chip ${rest.cls}" title="Pauza de repaus (sfârșit zi → start zi următoare)">${rest.label}</span>
           </div>
         </div>
 
@@ -374,18 +374,18 @@ function renderWeeklyCards(){
     `;
   }).join('');
 
-  // totaluri 7/14 zile (condus)
+  // totaluri 7/14 zile
   const { weekDrive, fortDrive } = sumWindows();
   q('#sum7').textContent  = fmtHM(weekDrive);
   q('#sum14').textContent = fmtHM(fortDrive);
 
-  // bonus: click pe card te duce în „Detalii” filtrat pe zi
+  // (bonus) click card => sari în tabul „Detalii”
   document.querySelectorAll('.day-card').forEach(card=>{
     card.addEventListener('click', ()=>{
       const day = card.getAttribute('data-day');
       if (!day) return;
-      selectMainTab('details'); // dacă ai funcția existentă
-      highlightLogsForDay(day);
+      selectMainTab('details');
+      highlightLogsForDay(day); // opțional (vezi helperul)
     });
   });
 }
