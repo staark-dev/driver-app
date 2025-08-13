@@ -271,8 +271,8 @@ function renderWeeklyCards(){
     .slice(-7)
     .sort((a, b) => new Date(a.day) - new Date(b.day));
   el.weekGrid.innerHTML = days.map((d,i)=>{
-    const t = d.totals || {drive: 0, work: 0, break: 0 };
-    const longBreak = (t.break||0) >= LIMITS.reqBreak;
+    const t = d.totals || { drive: 0, work: 0, break: 0 };
+    const longBreak = ( t.break || 0) >= LIMITS.reqBreak;
     const ext = !!d.extended;
 
     // Data în format românesc
@@ -286,7 +286,7 @@ function renderWeeklyCards(){
     return `
       <div class="day-card">
         <div class="day-header">
-          <div class="day-badge">${dateStr}</div>
+          <div class="day-badge">${i+1} <span class="date-time" style="margin-right: 20px; font-size: 10px; font-weight: 400;">${dateStr}</span></div>
           <div class="day-dots">
             ${ext?'<span class="dot-or" title="Zi extinsă 10h"></span>':''}
             ${longBreak?'<span class="dot-bl" title="Pauze ≥ 45 min"></span>':''}
@@ -300,8 +300,8 @@ function renderWeeklyCards(){
         
         <div class="row-metric" title="Muncă total (zi)">
           <svg viewBox="0 0 24 24"><path d="M4 3h2v18H4V3Zm3 2h9l-1.5 3L16 11H7V5Z"/></svg>
-          <span class="metric-sub">Pauza</span>
-          <span class="metric-val mono">${fmtHM(t.break || 0)}</span>
+          <span class="metric-sub">Pauza (${longBreak})</span>
+          <span class="metric-val mono">${fmtHM(d.break || 0)}</span>
         </div>
 
         <div class="row-metric" title="Start Program (total zi)">
