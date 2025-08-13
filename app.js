@@ -90,6 +90,11 @@ function selectMainTab(tabName) {
   
   if (activePanel) {
     activePanel.classList.add('active');
+    if (tabName === 'details') renderDetailsTable({ limit: 'all' });
+    if (tabName === 'details') {
+      document.querySelector('#logTable')?.closest('table')?.classList.add('hidden');
+    }
+    
     // ascunde/afișează .row în funcție de tab
     document.body.setAttribute('data-tab', tabName);
     
@@ -97,9 +102,9 @@ function selectMainTab(tabName) {
     console.log("Se aplică restricție pe:", rowSection);
     
     if (['details', 'weekly', 'settings'].includes(tabName)) {
-      if (rowSection) rowSection.style.display = 'none';
+      rowSection.style.display = 'none';
     } else {
-      if (rowSection) rowSection.style.display = '';
+      rowSection.style.display = '';
     }
     
     console.log("Sa selectat: ", activePanel);
@@ -138,7 +143,14 @@ function getAllDaysMerged(){
 
 function renderDetailsTable({limit='all', search='' } = {}){
   const host = document.getElementById('detailsContainer');
-  if (!host) return;
+  console.log("renderDetailsTable loaded...", host);
+  
+  if (!host) {
+    // fallback: îl creăm în panelul Detalii dacă lipsește
+    host = document.createElement('div');
+    host.id = 'detailsContainer';
+    el.panels.details?.appendChild(host);
+  }
 
   const all = getAllDaysMerged();
 
@@ -150,16 +162,16 @@ function renderDetailsTable({limit='all', search='' } = {}){
   })();
 
   // filtrare după text (tip sau oră)
-  const q = (search || '').trim().toLowerCase();
+  const query = (search || '').trim().toLowerCase();
   const passEvent = (e) => {
-    if (!q) return true;
-    return (e.type||'').toLowerCase().includes(q)
-        || new Date(e.start).toLocaleTimeString('ro-RO').toLowerCase().includes(q)
-        || new Date(e.end||e.start).toLocaleTimeString('ro-RO').toLowerCase().includes(q);
+    if (!query) return true;
+    return (e.type||'').toLowerCase().includes(query)
+        || new Date(e.start).toLocaleTimeString('sv-SE').toLowerCase().includes(query)
+        || new Date(e.end||e.start).toLocaleTimeString('ro-RO').toLowerCase().includes(query);
   };
 
-  const fmtDate = iso => new Date(iso).toLocaleDateString('ro-RO',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
-  const fmtClock = ms  => new Date(ms).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+  const fmtDate = iso => new Date(iso).toLocaleDateString('sv-SE',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+  const fmtClock = ms  => new Date(ms).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
 
   // construim HTML
   host.innerHTML = filteredByLimit.map((dayRec, idx)=>{
