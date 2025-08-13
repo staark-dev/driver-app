@@ -79,8 +79,15 @@ function selectMainTab(tabName) {
 
   // afișăm doar panoul selectat
   const activePanel = document.getElementById('tab-' + tabName);
-  console.log("Selected tabel:", 'tab-' + tabName);
   if (activePanel) activePanel.classList.add('active');
+
+    // ascunde/afișează .row în funcție de tab
+  const rowSection = document.querySelector('.row');
+  if (tabName === 'tab-details' || tabName === 'tab-weekly' || tabName === 'tab-settings') {
+    rowSection.style.display = 'none';
+  } else {
+    rowSection.style.display = '';
+  }
 }
 
 function archiveDay(dayObj){
