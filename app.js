@@ -79,16 +79,20 @@ function selectMainTab(tabName) {
 
   // afișăm doar panoul selectat
   const activePanel = document.getElementById('tab-' + tabName);
-  if (activePanel) activePanel.classList.add('active');
+  if (activePanel) {
+    activePanel.classList.add('active');
+    // ascunde/afișează .row în funcție de tab
+    document.body.setAttribute('data-tab', tabName);
+    const rowSection = document.querySelector('.row');
+    
+    console.log("Sa selectat: ", activePanel);
+    console.log("Se aplica restrictie pe: ", rowSection);
 
-  // ascunde/afișează .row în funcție de tab
-  document.body.setAttribute('data-tab', tabName);
-  const rowSection = document.querySelector('.row');
-  
-  if (tabName === 'details' || tabName === 'weekly' || tabName === 'settings') {
-    rowSection.style.display = 'none';
-  } else {
-    rowSection.style.display = '';
+    if (tabName === 'details' || tabName === 'weekly' || tabName === 'settings') {
+      rowSection.style.display = 'none';
+    } else {
+      rowSection.style.display = '';
+    }
   }
 }
 
