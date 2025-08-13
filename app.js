@@ -107,6 +107,140 @@ function selectMainTab(tabName) {
   }
 }
 
+function getAllDaysMerged(){
+  // history + today (cu events „live”)
+  const logs = getLogs();
+  const todayRec = {
+    day: state.day,
+    totals: calcTotalsWithCurrent(),
+    events: [...state.events],
+    extended: state.extended,
+    startAt: state.startAt || null
+  };
+  if (state.current) {
+    // evenimentul curent ca până la „acum”
+    todayRec.events.push({
+      type: state.current.type,
+      start: state.current.startAt,
+      end: Date.now()
+    });
+  }
+  const all = [...logs, todayRec];
+  // normalize (asigură câmpuri)
+  return all.map(d => ({
+    day: d.day,
+    startAt: d.startAt || null,
+    extended: !!d.extended,
+    totals: d.totals || {drive:0, break:0, work:0},
+    events: Array.isArray(d.events) ? d.events.slice().sort((a,b)=>a.start-b.start) : []
+  })).sort((a,b)=> new Date(b.day) - new Date(a.day)); // descrescător
+}
+
+function renderDetailsTable({limit='all', search='' } = {}){
+  const host = document.getElementById('detailsContainer');
+  if (!host) return;
+
+  const all = getAllDaysMerged();
+
+  // aplică limită zile
+  const filteredByLimit = (() => {
+    if (limit === 7)  return all.slice(0, 7);
+    if (limit === 30) return all.slice(0, 30);
+    return all; // toate
+  })();
+
+  // filtrare după text (tip sau oră)
+  const q = (search || '').trim().toLowerCase();
+  const passEvent = (e) => {
+    if (!q) return true;
+    return (e.type||'').toLowerCase().includes(q)
+        || new Date(e.start).toLocaleTimeString('ro-RO').toLowerCase().includes(q)
+        || new Date(e.end||e.start).toLocaleTimeString('ro-RO').toLowerCase().includes(q);
+  };
+
+  const fmtDate = iso => new Date(iso).toLocaleDateString('ro-RO',{weekday:'short', day:'2-digit', month:'2-digit', year:'numeric'});
+  const fmtClock = ms  => new Date(ms).toLocaleTimeString('ro-RO',{hour:'2-digit',minute:'2-digit'});
+
+  // construim HTML
+  host.innerHTML = filteredByLimit.map((dayRec, idx)=>{
+    const dayEvents = (dayRec.events||[]).filter(passEvent);
+    const hdr = `
+      <div class="day-head" data-day="${dayRec.day}">
+        <div class="day-title">${fmtDate(dayRec.day)}</div>
+        <div class="day-chips">
+          <span class="chip-sm">Condus: <b class="mono">${fmtHM(dayRec.totals.drive||0)}</b></span>
+          <span class="chip-sm">Pauză: <b class="mono">${fmtHM(dayRec.totals.break||0)}</b></span>
+          <span class="chip-sm">Muncă: <b class="mono">${fmtHM(dayRec.totals.work||0)}</b></span>
+          ${dayRec.extended ? '<span class="chip-sm">Zi extinsă</span>' : ''}
+          ${dayRec.startAt ? `<span class="chip-sm">Start: <b>${fmtClock(dayRec.startAt)}</b></span>` : ''}
+        </div>
+        <div class="chip-sm">${dayEvents.length} evenimente</div>
+      </div>`;
+
+    const body = `
+      <div class="day-body">
+        <table class="table">
+          <thead><tr><th>Start</th><th>Stop</th><th>Durată</th><th>Tip</th></tr></thead>
+          <tbody>
+            ${dayEvents.map(e=>{
+              const dur = Math.max(0, (e.end||Date.now()) - e.start);
+              return `<tr>
+                        <td>${fmtClock(e.start)}</td>
+                        <td>${e.end ? fmtClock(e.end) : '—'}</td>
+                        <td class="mono">${fmtHM(dur)}</td>
+                        <td>${e.type}</td>
+                      </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+
+    // implicit: primele 3 zile deschise, restul pliate
+    const collapsed = idx >= 3 ? 'collapsed' : '';
+    return `<div class="day-group ${collapsed}">${hdr}${body}</div>`;
+  }).join('');
+
+  // toggle expand/collapse pe header
+  host.querySelectorAll('.day-head').forEach(head=>{
+    head.addEventListener('click', ()=>{
+      head.parentElement.classList.toggle('collapsed');
+    });
+  });
+}
+
+// hook pe controale
+document.getElementById('btnDet7')?.addEventListener('click', ()=> renderDetailsTable({limit:7,  search: document.getElementById('detSearch')?.value }));
+document.getElementById('btnDet30')?.addEventListener('click',()=> renderDetailsTable({limit:30, search: document.getElementById('detSearch')?.value }));
+document.getElementById('btnDetAll')?.addEventListener('click',()=> renderDetailsTable({limit:'all', search: document.getElementById('detSearch')?.value }));
+document.getElementById('detSearch')?.addEventListener('input', (e)=> renderDetailsTable({limit:'all', search: e.target.value }));
+
+// export CSV (toate evenimentele, toate zilele)
+document.getElementById('btnExportCSVFull')?.addEventListener('click', ()=>{
+  const all = getAllDaysMerged();
+  const rows = [['day','start','end','duration_ms','duration_hhmm','type','extended','startAt_day']];
+  all.forEach(d=>{
+    (d.events||[]).forEach(e=>{
+      const dur = Math.max(0, (e.end||Date.now()) - e.start);
+      rows.push([
+        d.day,
+        new Date(e.start).toISOString(),
+        e.end ? new Date(e.end).toISOString() : '',
+        dur,
+        fmtHM(dur),
+        e.type,
+        d.extended ? 1 : 0,
+        d.startAt ? new Date(d.startAt).toISOString() : ''
+      ]);
+    });
+  });
+  const csv = rows.map(r => r.map(x => `"${String(x).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = 'detalii-evenimente.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+
 function archiveDay(dayObj){
   if (dayObj.current){
     const now = Date.now();
@@ -121,6 +255,7 @@ function archiveDay(dayObj){
   const withoutSame = logs.filter(x=>x.day!==dayObj.day);
   withoutSame.push({ day:dayObj.day, totals:dayObj.totals, events:dayObj.events, extended:!!dayObj.extended });
   withoutSame.sort((a,b)=>a.day.localeCompare(b.day));
+  
   localStorage.setItem(LS_LOG, JSON.stringify(withoutSame.slice(-30)));
 }
 
@@ -488,6 +623,8 @@ document.querySelector('.mobile-nav').addEventListener('click', (e)=>{
   ['daily','weekly','details','settings'].forEach(k =>
     el.panels[k].classList.toggle('active', k===tab)
   );
+
+  if (tab === 'details') renderDetailsTable({limit:'all'});
 
   console.log("[SERVER] moile nav button has been loaded.");
   const rowSection = document.querySelector('.row');
