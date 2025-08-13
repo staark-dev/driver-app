@@ -46,11 +46,18 @@ ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direc
   color: #fff;
 }
 
-/* card fără date */
-.day-card.empty{
-  opacity: .55;
-  filter: grayscale(.1);
-}
+/* Carduri Săptămână – mici ajustări */
+.day-card.empty{ opacity:.55; filter:grayscale(.1); }
+.badge-col{ display:flex; flex-direction:column; align-items:center; gap:4px; min-width:56px; }
+.date-text{ font-size:11px; color:#475569; line-height:1; white-space:nowrap; }
+.start-line{ margin-top:8px; font-size:12px; color:#64748b; }
+
+/* Chip pentru „pauza de repaus zilnic” (11h/10h/9h) */
+.rest-chip{ font-size:12px; font-weight:600; border:1px solid #e5e7eb; background:#f8fafc; border-radius:10px; padding:2px 8px; }
+.rest-good{ color:#15803d; border-color:#bbf7d0; background:#f0fdf4; } /* ≥ 11h */
+.rest-mid { color:#92400e; border-color:#fed7aa; background:#fff7ed; } /* ≥ 10h */
+.rest-low { color:#991b1b; border-color:#fecaca; background:#fef2f2; } /* ≥ 9h */
+.rest-unk { color:#475569; } /* necunoscut */
 
 .legend{ margin-top:12px; font-size:12px; color:var(--muted); display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
 .swatch{ width:10px; height:10px; border-radius:2px; display:inline-block; }
@@ -109,10 +116,6 @@ ul.bars{ list-style:none; padding:0; margin:12px 0 0 0; display:flex; flex-direc
 .dot-bl{ background:#38bdf8; } /* pauze ≥45' în zi */
 
 .start-line { font-size:12px; color:#64748b; }
-.rest-chip {
-  font-size:12px; font-weight:600;
-  border:1px solid #e5e7eb; background:#f8fafc; border-radius:10px; padding:4px 8px;
-}
 .row-metric { display:grid; grid-template-columns:auto 1fr auto; gap:8px; align-items:center; }
 .row-metric svg { width:20px; height:20px; }
 .metric-val { font-size:22px; font-weight:600; }
