@@ -267,15 +267,20 @@ function render(){
 
 function renderWeeklyCards(){
   const logs = getLogs();
-  const days = [...logs, { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended }].slice(-7);
+  const days = [...logs, { day: state.day, totals: calcTotalsWithCurrent(), extended: state.extended }]
+    .slice(-7)
+    .sort((a, b) => new Date(a.day) - new Date(b.day));
   el.weekGrid.innerHTML = days.map((d,i)=>{
-    const t=d.totals || {drive:0, work:0, break:0};
+    const t = d.totals || {drive: 0, work: 0, break: 0 };
     const longBreak = (t.break||0) >= LIMITS.reqBreak;
     const ext = !!d.extended;
+
+    const dateStr = new Date(d.day).toLocaleDateString('ro-RO', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    
     return `
       <div class="day-card">
         <div class="day-header">
-          <div class="day-badge">${i+1}</div>
+          <div class="day-badge">${dateStr}</div>
           <div class="day-dots">
             ${ext?'<span class="dot-or" title="Zi extinsă 10h"></span>':''}
             ${longBreak?'<span class="dot-bl" title="Pauze ≥ 45 min"></span>':''}
@@ -283,13 +288,13 @@ function renderWeeklyCards(){
         </div>
         <div class="row-metric" title="Condus (total zi)">
           <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm0 2a8 8 0 0 1 7.75 6H4.25A8 8 0 0 1 12 4Zm-8 8h6a2 2 0 0 0 2-2h4a6 6 0 0 1-6 6H4a2 2 0 0 1-2-2Zm20 0a2 2 0 0 1-2 2h-4a6 6 0 0 1-6-6h4a2 2 0 0 0 2 2h6Z"/></svg>
-          <span class="metric-sub">Condus</span>
-          <span class="metric-val mono">${fmtHM(t.drive||0)}</span>
+          <span class="metric-sub">🚗 Condus</span>
+          <span class="metric-val mono">${fmtHM(t.drive || 0)}</span>
         </div>
         <div class="row-metric" title="Muncă total (zi)">
           <svg viewBox="0 0 24 24"><path d="M4 3h2v18H4V3Zm3 2h9l-1.5 3L16 11H7V5Z"/></svg>
-          <span class="metric-sub">Muncă</span>
-          <span class="metric-val mono">${fmtHM(t.work||0)}</span>
+          <span class="metric-sub">☕ Pauza</span>
+          <span class="metric-val mono">${fmtHM(t.break || 0)}</span>
         </div>
       </div>
     `;
