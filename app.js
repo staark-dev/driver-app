@@ -425,7 +425,7 @@ function render(){
 
   // Auto-pauză dacă nu există activitate și nu e pauză
   if (!state.current || state.current.type !== 'break') {
-    start('break');
+    //start('break');
   }
   
   // header + setări
