@@ -1,213 +1,2045 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ro">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Program Șofer</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BudgetPro 2.0 - Managementul Inteligent al Banilor</title>
+    <meta name="theme-color" content="#6366f1">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkJ1ZGdldFBybyAyLjAiLAogICJzaG9ydF9uYW1lIjogIkJ1ZGdldFBybyIsCiAgInN0YXJ0X3VybCI6ICIvIiwKICAiZGlzcGxheSI6ICJzdGFuZGFsb25lIiwKICAiYmFja2dyb3VuZF9jb2xvciI6ICIjMGYwZjIzIiwKICAidGhlbWVfY29sb3IiOiAiIzYzNjZmMSIKfQ==">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-  <!-- PWA -->
-  <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#0EA5E9" />
-  <link rel="icon" href="icons/icon-192.png">
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f0f23;
+            --dark-card: #1a1b3a;
+            --dark-lighter: #252647;
+            --text-primary: #f0f0f5;
+            --text-secondary: #a0a0b8;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-success: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
 
-  <link rel="stylesheet" href="./styles.css">
+        body {
+            font-family: -apple-system, 'Inter', BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body.light-mode {
+            --dark: #f8f9fa;
+            --dark-card: #ffffff;
+            --dark-lighter: #f0f0f5;
+            --text-primary: #1a1b3a;
+            --text-secondary: #6b7280;
+            background: linear-gradient(135deg, #e0e7ff 0%, #cffafe 100%);
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 800;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: var(--dark-lighter);
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background: var(--primary);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--dark-card);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.2);
+        }
+
+        .balance-card {
+            background: var(--gradient-1);
+            grid-column: span 2;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .balance-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 15px 0;
+            letter-spacing: -1px;
+        }
+
+        .balance-trend {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--gradient-1);
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .tabs-container {
+            background: var(--dark-card);
+            border-radius: 20px;
+            padding: 5px;
+            margin-bottom: 30px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-radius: 15px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.3s;
+            white-space: nowrap;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .input, .select {
+            width: 100%;
+            padding: 14px;
+            background: var(--dark-lighter);
+            border: 2px solid transparent;
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input:focus, .select:focus {
+            outline: none;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--dark-lighter);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .transaction-item:hover {
+            transform: translateX(5px);
+            background: var(--primary);
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            background: var(--dark-card);
+            margin-right: 15px;
+        }
+
+        .transaction-details {
+            flex: 1;
+        }
+
+        .transaction-desc {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .transaction-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .transaction-amount {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .amount-positive {
+            color: var(--success);
+        }
+
+        .amount-negative {
+            color: var(--danger);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+
+        .goals-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .goal-card {
+            background: var(--dark-lighter);
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .goal-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .goal-amount {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: var(--dark-card);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--gradient-1);
+            border-radius: 10px;
+            transition: width 0.5s ease-out;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            width: 30px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5));
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-30px); }
+            100% { transform: translateX(30px); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--dark-card);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            animation: modalPop 0.3s ease-out;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalPop {
+            from {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .recurring-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: var(--warning);
+            color: white;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .insights-card {
+            background: var(--gradient-2);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .insight-text {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-1);
+            border-radius: 50%;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--dark-card);
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: transform 0.3s ease-out;
+            z-index: 2000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            font-size: 20px;
+        }
+
+        .export-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: var(--dark-card);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+
+        .export-menu.show {
+            display: block;
+        }
+
+        .export-option {
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .export-option:hover {
+            background: var(--dark-lighter);
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .balance-card {
+                grid-column: span 1;
+            }
+            
+            .stats-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .balance-amount {
+                font-size: 36px;
+            }
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--dark-lighter);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-  <div class="wrap">
-    <section class="card" aria-label="Asistență timp condus">
-      <header class="status">
-        <span class="pill">Stare: <strong id="stateLabel">inactiv</strong></span>
-        <span class="pill">Ziua: <span id="dayLabel"></span></span>
-
-        <label class="switch" title="Activează notificări la 4h30 și la limită">
-          <input id="toggleAlerts" type="checkbox"> Alerte
-        </label>
-        <label class="switch" title="Zi extinsă până la 10h (max 2 ori / 7 zile)">
-          <input id="toggleExtended" type="checkbox"> Zi extinsă 10h
-        </label>
-        <span id="extLeftBadge" class="pill hint">Extinse rămase: 2</span>
-      </header>
-
-      <div class="row">
-        <!-- STÂNGA: gauge (condus în SESIUNEA curentă) -->
-        <div class="left">
-          <div class="gauge" aria-label="Condus în sesiunea curentă">
-            <svg id="gaugeSvg" width="180" height="180" viewBox="0 0 180 180" role="img" aria-hidden="true">
-              <circle cx="90" cy="90" r="78" fill="none" stroke="#EEF2F7" stroke-width="12"></circle>
-              <circle id="gaugeProg" cx="90" cy="90" r="78" fill="none" stroke="#0EA5E9" stroke-width="12"
-                      stroke-linecap="round" stroke-dasharray="0 1000" transform="rotate(-90 90 90)"></circle>
-              <circle id="marker" cx="90" cy="12" r="4" fill="#F59E0B"></circle>
-            </svg>
-            <div class="center">
-              <div>
-                <div class="label">Condus (sesiune)</div>
-                <div id="drivenVal" class="big mono">0:00</div>
-                <div class="label">Marker 4:30</div>
-              </div>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                💰 BudgetPro 2.0
             </div>
-          </div>
-          <div class="muted" style="max-width:240px">Cercul arată timpul de condus din <strong>sesiunea curentă</strong> (se resetează după pauză ≥ 45′).</div>
-        </div>
-
-        <!-- DREAPTA: timp rămas (zilnic) + bare -->
-        <div class="right" style="flex:1">
-          <div style="display:flex; align-items:baseline; justify-content:space-between;">
-            <h2>Timp de condus zilnic rămas</h2>
-            <div id="remainVal" class="remain mono">0:00</div>
-          </div>
-
-          <ul class="bars">
-            <li class="barrow"><span class="muted">Condus (sesiune)</span><div class="barbg"><div id="barDriveSess" class="barfg"></div></div><div><span id="barDriveSessVal" class="mono">0:00</span></div></li>
-            <li class="barrow"><span class="muted">Condus azi</span><div class="barbg"><div id="barDriveDay" class="barfg"></div></div><div><span id="barDriveDayVal" class="mono">0:00</span></div></li>
-            <li class="barrow"><span class="muted">Pauze</span><div class="barbg"><div id="barBreak" class="barfg"></div></div><div><span id="barBreakVal" class="mono">0:00</span></div></li>
-            <li class="barrow"><span class="muted">Muncă total</span><div class="barbg"><div id="barWork" class="barfg"></div></div><div><span id="barWorkVal" class="mono">0:00</span></div></li>
-            <li class="barrow"><span class="muted">Săptămână</span><div class="barbg"><div id="barW1" class="barfg"></div></div><div><span id="barW1Val" class="mono">0:00</span></div></li>
-            <li class="barrow"><span class="muted">2 săptămâni</span><div class="barbg"><div id="barW2" class="barfg"></div></div><div><span id="barW2Val" class="mono">0:00</span></div></li>
-          </ul>
-
-          <div class="legend">
-            <span class="swatch" style="background:#0EA5E9"></span> Cerc = Condus (sesiune)
-            <span class="swatch" style="background:#F59E0B"></span> Marker 4h30
-          </div>
-        </div>
-      </div>
-
-      <!-- PANOURI -->
-      <div id="tab-daily" class="tabpanel active" role="tabpanel" aria-labelledby="Zilnic">
-        <div class="controls">
-          <button id="btnStartDrive" class="chip" title="Începe condus">🚚 Condus</button>
-          <button id="btnBreak" class="chip" title="Pauză">☕ Pauză</button>
-          <button id="btnWork" class="chip" title="Muncă">🧰 Muncă</button>
-          <button id="btnStop" class="chip" title="Termină">⏹️ Termină</button>
-        </div>
-        <p class="muted">Indicatorii pentru ziua curentă. Cercul = timp de condus în <strong>sesiunea curentă</strong>.</p>
-      </div>
-
-      <div id="tab-weekly" class="tabpanel" role="tabpanel" aria-labelledby="Săptămânal">
-        <h1>Activitate Săptămânală</h1>
-        <div class="week-grid" id="weekGrid"></div>
-        <div class="week-sum">
-          <span class="sum-chip" title="Total condus ultimele 7 zile">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm14 8H3v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8Z"/></svg>
-            <span><span id="sum7" class="mono">0:00</span> / 56:00</span>
-          </span>
-          <span class="sum-chip" title="Total condus ultimele 14 zile">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h2v2h2V2h2v2h2V2h2v2h2a2 2 0 0 1 2 2v2H3V6a2 2 0 0 1 2-2h0V2Z M3 10h18v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-8Z"/></svg>
-            <span><span id="sum14" class="mono">0:00</span> / 90:00</span>
-          </span>
-        </div>
-      </div>
-
-      <div id="tab-details" class="tabpanel" role="tabpanel" aria-labelledby="Detalii">
-        <h1>Detalii</h1>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 10px;">
-          <button id="btnExportCSV" class="chip">⬇️ Export CSV</button>
-          <button id="btnExportJSON" class="chip">⬇️ Export JSON</button>
-          <label class="chip" style="cursor:pointer;">
-            ⬆️ Import JSON
-            <input id="importJsonInput" type="file" accept="application/json" hidden>
-          </label>
-        </div>
-
-        <div class="log-card">
-          <div class="log-head">
-            <div>
-              <div class="log-title">Jurnal (azi)</div>
-              <div class="log-sub">Evenimente în ordine cronologică</div>
+            <div class="header-actions">
+                <button class="theme-toggle" id="themeToggle">🌙</button>
+                <button class="theme-toggle" id="exportBtn">📥</button>
+                <div class="export-menu" id="exportMenu">
+                    <div class="export-option" onclick="app.exportCSV()">📊 Export CSV</div>
+                    <div class="export-option" onclick="app.exportJSON()">📄 Export JSON</div>
+                    <div class="export-option" onclick="app.importData()">📤 Import Date</div>
+                </div>
             </div>
-            <div class="log-meta mono" id="logTotalDur">Total: 0:00</div>
-          </div>
-        
-          <table class="table log-table">
-            <thead>
-              <tr>
-                <th>Start</th>
-                <th>Stop</th>
-                <th>Durată</th>
-                <th>Tip</th>
-              </tr>
-            </thead>
-            <tbody id="logTable"></tbody>
-          </table>
-        
-          <div id="logEmpty" class="log-empty muted">Nu există încă activități înregistrate.</div>
-        </div>
-        
-        <div class="controls-line">
-          <button id="btnDet7" class="chip">Ultimele 7 zile</button>
-          <button id="btnDet30" class="chip">Ultimele 30</button>
-          <button id="btnDetAll" class="chip">Toate</button>
-          <input id="detSearch" class="input-search" placeholder="Caută: condus / pauză / muncă..." />
-          <button id="btnExportCSVFull" class="chip">⬇️ Export CSV (toate)</button>
-        </div>
-        
-        <div id="detailsContainer"></div>
-      </div>
+        </header>
 
-      <!-- SETĂRI -->
-      <div id="tab-settings" class="tabpanel" role="tabpanel" aria-labelledby="Setări">
-        <h1>Setări Aplicatie</h1>
-        <div class="form">
-          <div class="field">
-            <label for="inpDriver" class="label">Șofer</label>
-            <input id="inpDriver" class="input" type="text" placeholder="nume șofer">
-          </div>
-          <div class="field">
-            <label for="inpTruck" class="label">Camion</label>
-            <input id="inpTruck" class="input" type="text" placeholder="ex: B-12-ABC / cod flotă">
-          </div>
-          <div class="field">
-            <label for="inpTrailer" class="label">Remorcă</label>
-            <input id="inpTrailer" class="input" type="text" placeholder="opțional">
-          </div>
-          <div class="field">
-            <label for="inpRoute" class="label">Nume cursă</label>
-            <input id="inpRoute" class="input" type="text" placeholder="ex: RO→DE 13.08">
-          </div>
-        </div>
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Balanță Principală -->
+            <div class="card balance-card">
+                <div class="balance-content">
+                    <div class="balance-label">Balanța ta curentă</div>
+                    <div class="balance-amount" id="mainBalance">0.00 RON</div>
+                    <span class="balance-trend" id="balanceTrend">
+                        <span id="trendIcon">📈</span>
+                        <span id="trendText">+0% față de luna trecută</span>
+                    </span>
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-value" id="monthIncome">0</div>
+                            <div class="stat-label">Venituri luna asta</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="monthExpenses">0</div>
+                            <div class="stat-label">Cheltuieli luna asta</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="dailyAvailable">0</div>
+                            <div class="stat-label">Disponibil pe zi</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-        <div class="controls" style="margin-top:10px">
-          <button id="btnSaveTrip" class="chip">💾 Salvează cursa</button>
-          <label class="chip" style="cursor:pointer;">📂 Încarcă cursa
-            <input id="loadTripInput" type="file" accept="application/json" hidden>
-          </label>
-          <button id="btnWipeAll" class="chip" title="Șterge tot ce e salvat în acest dispozitiv">🗑️ Resetare date</button>
+            <!-- Quick Stats -->
+            <div class="card">
+                <h3 style="margin-bottom: 20px;">Acțiuni Rapide</h3>
+                <div class="quick-actions">
+                    <button class="btn btn-success" onclick="app.openQuickAdd('income')">
+                        <span>➕</span> Venit
+                    </button>
+                    <button class="btn btn-danger" onclick="app.openQuickAdd('expense')">
+                        <span>➖</span> Cheltuială
+                    </button>
+                </div>
+                <div style="margin-top: 20px;">
+                    <div class="stat-label">Următorul salariu în</div>
+                    <div class="stat-value" id="daysToPayday">-- zile</div>
+                    <div class="progress-bar" style="margin-top: 10px;">
+                        <div class="progress-fill" id="monthProgress"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <p class="muted">Setările și informațiile de cursă se salvează local pe dispozitiv. „Salvează cursa” exportă un fișier JSON (meta + timpi), „Încarcă cursa” reface acele date.</p>
-      </div>
-    </section>
-  </div>
+        <!-- Insights Card -->
+        <div class="card insights-card" id="insightsCard">
+            <h3 style="margin-bottom: 15px;">💡 Insights AI</h3>
+            <div class="insight-text" id="insightText">
+                Analizez datele tale financiare...
+            </div>
+        </div>
 
-  <!-- MENIU PRINCIPAL JOS: Zilnic / Săptămână / Detalii / Setări -->
-  <footer class="mobile-nav" role="tablist" aria-label="Meniu principal">
-    <div class="mobile-actions">
-      <button class="action" role="tab" aria-selected="true" data-tab="daily"  title="Zilnic">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm14 8H3v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8ZM7 14h5v5H7v-5Z"/></svg>
-        <span>Zilnic</span>
-      </button>
-      <button class="action" role="tab" aria-selected="false" data-tab="weekly" title="Săptămână">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 2v2H5a2 2 0 0 0-2 2v2h18V6a2 2 0 0 0-2-2h-2V2h-2v2H9V2H7Zm14 8H3v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-8ZM6 14h12v2H6v-2Z"/></svg>
-        <span>Săptămână</span>
-      </button>
-      <button class="action" role="tab" aria-selected="false" data-tab="details" title="Detalii">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2Zm1 15h-2v-6h2v6Zm0-8h-2V7h2v2Z"/></svg>
-        <span>Detalii</span>
-      </button>
-      <button class="action" role="tab" aria-selected="false" data-tab="settings" title="Setări">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8a4 4 0 1 0 .001 8.001A4 4 0 0 0 12 8Zm8.94 4.5a7.94 7.94 0 0 0-.16-1.6l2.11-1.65-1.99-3.45-2.57 1a8.07 8.07 0 0 0-2.77-1.61l-.4-2.7H9.84l-.4 2.7a8.07 8.07 0 0 0-2.77 1.6l-2.57-1L2.1 9.25l2.1 1.65c-.07.52-.11 1.06-.11 1.6s.04 1.08.11 1.6l-2.1 1.65 1.99 3.45 2.57-1a8.07 8.07 0 0 0 2.77 1.61l.4 2.7h4.72l.4-2.7a8.07 8.07 0 0 0 2.77-1.61l2.57 1 1.99-3.45-2.11-1.65c.1-.52.16-1.06.16-1.6Z"/></svg>
-        <span>Setări</span>
-      </button>
+        <!-- Tabs -->
+        <div class="tabs-container">
+            <div class="tabs">
+                <button class="tab active" data-tab="overview">📊 Prezentare</button>
+                <button class="tab" data-tab="transactions">💳 Tranzacții</button>
+                <button class="tab" data-tab="goals">🎯 Obiective</button>
+                <button class="tab" data-tab="recurring">🔄 Recurente</button>
+                <button class="tab" data-tab="analytics">📈 Analiză</button>
+                <button class="tab" data-tab="budget">💰 Bugete</button>
+            </div>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="tab-content active" id="overview">
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Cheltuieli pe Categorii</h3>
+                    <canvas id="categoryChart" style="margin-top: 20px;"></canvas>
+                </div>
+                <div class="card">
+                    <h3>Trend Lunar</h3>
+                    <canvas id="trendChart" style="margin-top: 20px;"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Tranzacții Recente</h3>
+                <div id="recentTransactions" style="margin-top: 20px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="transactions">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Toate Tranzacțiile</h3>
+                    <input type="text" class="input" placeholder="🔍 Caută..." id="searchInput" style="width: 200px;">
+                </div>
+                <div id="allTransactions">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="goals">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Obiective de Economii</h3>
+                    <button class="btn btn-primary" onclick="app.openGoalModal()">+ Obiectiv Nou</button>
+                </div>
+                <div class="goals-grid" id="goalsGrid">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="recurring">
+            <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Tranzacții Recurente</h3>
+                    <button class="btn btn-primary" onclick="app.openRecurringModal()">+ Adaugă Recurentă</button>
+                </div>
+                <div id="recurringList">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="analytics">
+            <div class="card">
+                <h3>Analiză Detaliată</h3>
+                <div class="dashboard-grid" style="margin-top: 20px;">
+                    <div style="background: var(--dark-lighter); padding: 20px; border-radius: 12px;">
+                        <div class="stat-label">Media Zilnică Cheltuieli</div>
+                        <div class="stat-value" id="avgDailySpending">0 RON</div>
+                    </div>
+                    <div style="background: var(--dark-lighter); padding: 20px; border-radius: 12px;">
+                        <div class="stat-label">Cea Mai Mare Cheltuială</div>
+                        <div class="stat-value" id="biggestExpense">0 RON</div>
+                    </div>
+                    <div style="background: var(--dark-lighter); padding: 20px; border-radius: 12px;">
+                        <div class="stat-label">Economii Estimate/Lună</div>
+                        <div class="stat-value" id="estimatedSavings">0 RON</div>
+                    </div>
+                </div>
+                <div style="margin-top: 30px;">
+                    <h4>Predicție Sfârșit de Lună</h4>
+                    <canvas id="predictionChart" style="margin-top: 20px;"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="budget">
+            <div class="card">
+                <h3>Configurare Bugete</h3>
+                <div id="budgetSettings" style="margin-top: 20px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
     </div>
-  </footer>
 
-  <script src="./app.js" defer></script>
-  <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js', { scope: './' });
-    });
-  }
-</script>
+    <!-- FAB Button -->
+    <button class="fab" onclick="app.openQuickAdd()">+</button>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <span class="notification-icon" id="notifIcon">✅</span>
+        <span id="notifText">Notificare</span>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="transactionModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Adaugă Tranzacție</h2>
+            <form id="transactionForm">
+                <div class="input-group">
+                    <label class="label">Descriere</label>
+                    <input type="text" class="input" id="modalDesc" placeholder="Ex: Salariu, Chirie..." required>
+                </div>
+                <div class="input-group">
+                    <label class="label">Sumă (RON)</label>
+                    <input type="number" class="input" id="modalAmount" placeholder="0.00" step="0.01" required>
+                </div>
+                <div class="input-group">
+                    <label class="label">Categorie</label>
+                    <select class="select" id="modalCategory">
+                        <optgroup label="Venituri">
+                            <option value="salary">💰 Salariu</option>
+                            <option value="freelance">💻 Freelance</option>
+                            <option value="investment">📈 Investiții</option>
+                            <option value="other-income">💵 Altele</option>
+                        </optgroup>
+                        <optgroup label="Cheltuieli">
+                            <option value="rent">🏠 Chirie</option>
+                            <option value="utilities">💡 Utilități</option>
+                            <option value="groceries">🛒 Cumpărături</option>
+                            <option value="transport">🚗 Transport</option>
+                            <option value="food">🍔 Mâncare</option>
+                            <option value="entertainment">🎮 Divertisment</option>
+                            <option value="health">🏥 Sănătate</option>
+                            <option value="education">📚 Educație</option>
+                            <option value="shopping">🛍️ Shopping</option>
+                            <option value="other">📦 Altele</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="label">Data</label>
+                    <input type="date" class="input" id="modalDate">
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <button type="button" class="btn btn-primary" id="saveTransaction">Salvează</button>
+                    <button type="button" class="btn" style="background: var(--dark-lighter);" onclick="app.closeModal('transactionModal')">Anulează</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="goalModal">
+        <div class="modal-content">
+            <h2>Adaugă Obiectiv de Economii</h2>
+            <form>
+                <div class="input-group">
+                    <label class="label">Nume Obiectiv</label>
+                    <input type="text" class="input" id="goalName" placeholder="Ex: Fond de urgență">
+                </div>
+                <div class="input-group">
+                    <label class="label">Sumă Țintă (RON)</label>
+                    <input type="number" class="input" id="goalTarget" placeholder="0.00">
+                </div>
+                <div class="input-group">
+                    <label class="label">Deadline</label>
+                    <input type="date" class="input" id="goalDeadline">
+                </div>
+                <div class="input-group">
+                    <label class="label">Icoană</label>
+                    <select class="select" id="goalIcon">
+                        <option value="🏠">🏠 Casă</option>
+                        <option value="🚗">🚗 Mașină</option>
+                        <option value="✈️">✈️ Vacanță</option>
+                        <option value="💍">💍 Nuntă</option>
+                        <option value="🎓">🎓 Educație</option>
+                        <option value="💊">💊 Sănătate</option>
+                        <option value="🛡️">🛡️ Urgență</option>
+                        <option value="💰">💰 General</option>
+                    </select>
+                </div>
+                <button type="button" class="btn btn-primary" onclick="app.saveGoal()" style="width: 100%;">Salvează Obiectiv</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="recurringModal">
+        <div class="modal-content">
+            <h2>Adaugă Tranzacție Recurentă</h2>
+            <form>
+                <div class="input-group">
+                    <label class="label">Descriere</label>
+                    <input type="text" class="input" id="recDesc" placeholder="Ex: Chirie, Netflix...">
+                </div>
+                <div class="input-group">
+                    <label class="label">Sumă (RON)</label>
+                    <input type="number" class="input" id="recAmount" placeholder="0.00">
+                </div>
+                <div class="input-group">
+                    <label class="label">Tip</label>
+                    <select class="select" id="recType">
+                        <option value="expense">Cheltuială</option>
+                        <option value="income">Venit</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="label">Categorie</label>
+                    <select class="select" id="recCategory">
+                        <option value="rent">🏠 Chirie</option>
+                        <option value="utilities">💡 Utilități</option>
+                        <option value="subscription">📱 Abonamente</option>
+                        <option value="salary">💰 Salariu</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="label">Frecvență</label>
+                    <select class="select" id="recFrequency">
+                        <option value="daily">Zilnic</option>
+                        <option value="weekly">Săptămânal</option>
+                        <option value="monthly">Lunar</option>
+                        <option value="yearly">Anual</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label class="label">Ziua din lună (pentru lunar)</label>
+                    <input type="number" class="input" id="recDay" placeholder="1-31" min="1" max="31">
+                </div>
+                <button type="button" class="btn btn-primary" onclick="app.saveRecurring()" style="width: 100%;">Salvează</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script>
+        // BudgetPro 2.0 - Advanced PWA Budget Manager
+        class BudgetPro {
+            constructor() {
+                this.data = {
+                    transactions: [],
+                    goals: [],
+                    recurring: [],
+                    budgets: {},
+                    settings: {
+                        currency: 'RON',
+                        payday: 25,
+                        theme: 'dark',
+                        notifications: true
+                    }
+                };
+                this.charts = {};
+                this.currentTransactionType = 'expense';
+                this.init();
+            }
+
+            init() {
+                this.loadData();
+                this.setupEventListeners();
+                this.updateDashboard();
+                this.initCharts();
+                this.processRecurring();
+                this.generateInsights();
+                this.registerServiceWorker();
+                
+                // Auto-save every 30 seconds
+                setInterval(() => this.saveData(), 30000);
+            }
+
+            loadData() {
+                const saved = localStorage.getItem('budgetProData');
+                if (saved) {
+                    this.data = JSON.parse(saved);
+                    if (this.data.settings.theme === 'light') {
+                        document.body.classList.add('light-mode');
+                        document.getElementById('themeToggle').textContent = '☀️';
+                    }
+                }
+                
+                // Generate demo data if empty
+                if (this.data.transactions.length === 0) {
+                    this.generateDemoData();
+                }
+            }
+
+            saveData() {
+                localStorage.setItem('budgetProData', JSON.stringify(this.data));
+            }
+
+            setupEventListeners() {
+                // Tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', (e) => {
+                        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        e.target.classList.add('active');
+                        document.getElementById(e.target.dataset.tab).classList.add('active');
+                        
+                        if (e.target.dataset.tab === 'analytics') {
+                            this.updateAnalytics();
+                        }
+                    });
+                });
+
+                // Theme toggle
+                document.getElementById('themeToggle').addEventListener('click', () => {
+                    document.body.classList.toggle('light-mode');
+                    this.data.settings.theme = document.body.classList.contains('light-mode') ? 'light' : 'dark';
+                    document.getElementById('themeToggle').textContent = this.data.settings.theme === 'light' ? '☀️' : '🌙';
+                    this.saveData();
+                });
+
+                // Export menu
+                document.getElementById('exportBtn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    document.getElementById('exportMenu').classList.toggle('show');
+                });
+
+                document.addEventListener('click', () => {
+                    document.getElementById('exportMenu').classList.remove('show');
+                });
+
+                // Transaction form
+                document.getElementById('saveTransaction').addEventListener('click', () => this.saveTransaction());
+
+                // Search
+                document.getElementById('searchInput')?.addEventListener('input', (e) => {
+                    this.filterTransactions(e.target.value);
+                });
+
+                // Close modals on backdrop click
+                document.querySelectorAll('.modal').forEach(modal => {
+                    modal.addEventListener('click', (e) => {
+                        if (e.target === modal) {
+                            modal.classList.remove('active');
+                        }
+                    });
+                });
+            }
+
+            initCharts() {
+                // Category Chart
+                const categoryCtx = document.getElementById('categoryChart')?.getContext('2d');
+                if (categoryCtx) {
+                    this.charts.category = new Chart(categoryCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: [],
+                            datasets: [{
+                                data: [],
+                                backgroundColor: [
+                                    '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e',
+                                    '#f59e0b', '#10b981', '#06b6d4', '#3b82f6'
+                                ]
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: { color: '#a0a0b8' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Trend Chart
+                const trendCtx = document.getElementById('trendChart')?.getContext('2d');
+                if (trendCtx) {
+                    this.charts.trend = new Chart(trendCtx, {
+                        type: 'line',
+                        data: {
+                            labels: [],
+                            datasets: [{
+                                label: 'Balanță',
+                                data: [],
+                                borderColor: '#6366f1',
+                                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false }
+                            },
+                            scales: {
+                                y: {
+                                    ticks: { color: '#a0a0b8' },
+                                    grid: { color: 'rgba(160, 160, 184, 0.1)' }
+                                },
+                                x: {
+                                    ticks: { color: '#a0a0b8' },
+                                    grid: { color: 'rgba(160, 160, 184, 0.1)' }
+                                }
+                            }
+                        }
+                    });
+                }
+
+                this.updateCharts();
+            }
+
+            updateDashboard() {
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const currentYear = now.getFullYear();
+                
+                // Calculate balances
+                const balance = this.data.transactions.reduce((sum, t) => sum + t.amount, 0);
+                const monthTransactions = this.data.transactions.filter(t => {
+                    const date = new Date(t.date);
+                    return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+                });
+                
+                const monthIncome = monthTransactions
+                    .filter(t => t.amount > 0)
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                const monthExpenses = Math.abs(monthTransactions
+                    .filter(t => t.amount < 0)
+                    .reduce((sum, t) => sum + t.amount, 0));
+                
+                // Update UI
+                document.getElementById('mainBalance').textContent = `${balance.toFixed(2)} ${this.data.settings.currency}`;
+                document.getElementById('monthIncome').textContent = monthIncome.toFixed(0);
+                document.getElementById('monthExpenses').textContent = monthExpenses.toFixed(0);
+                
+                // Days to payday
+                const daysToPayday = this.calculateDaysToPayday();
+                document.getElementById('daysToPayday').textContent = daysToPayday;
+                
+                // Daily available
+                const dailyAvailable = daysToPayday > 0 ? balance / daysToPayday : 0;
+                document.getElementById('dailyAvailable').textContent = dailyAvailable.toFixed(0);
+                
+                // Month progress
+                const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                const monthProgress = (now.getDate() / daysInMonth) * 100;
+                document.getElementById('monthProgress').style.width = `${monthProgress}%`;
+                
+                // Trend
+                this.updateTrend();
+                
+                // Recent transactions
+                this.updateRecentTransactions();
+                
+                // Update other tabs
+                this.updateAllTransactions();
+                this.updateGoals();
+                this.updateRecurring();
+                this.updateBudgets();
+            }
+
+            calculateDaysToPayday() {
+                const today = new Date();
+                const payday = this.data.settings.payday;
+                let daysLeft = payday - today.getDate();
+                
+                if (daysLeft <= 0) {
+                    const daysInMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+                    daysLeft += daysInMonth;
+                }
+                
+                return daysLeft;
+            }
+
+            updateTrend() {
+                // Calculate trend vs last month
+                const now = new Date();
+                const thisMonth = this.getMonthBalance(now.getMonth(), now.getFullYear());
+                const lastMonth = this.getMonthBalance(now.getMonth() - 1, now.getFullYear());
+                
+                const trend = lastMonth !== 0 ? ((thisMonth - lastMonth) / Math.abs(lastMonth)) * 100 : 0;
+                const trendIcon = trend >= 0 ? '📈' : '📉';
+                const trendText = `${trend >= 0 ? '+' : ''}${trend.toFixed(1)}% față de luna trecută`;
+                
+                document.getElementById('trendIcon').textContent = trendIcon;
+                document.getElementById('trendText').textContent = trendText;
+            }
+
+            getMonthBalance(month, year) {
+                return this.data.transactions
+                    .filter(t => {
+                        const date = new Date(t.date);
+                        return date.getMonth() === month && date.getFullYear() === year;
+                    })
+                    .reduce((sum, t) => sum + t.amount, 0);
+            }
+
+            updateRecentTransactions() {
+                const recent = this.data.transactions
+                    .slice(0, 5)
+                    .map(t => this.createTransactionElement(t))
+                    .join('');
+                
+                document.getElementById('recentTransactions').innerHTML = recent || '<p style="color: var(--text-secondary);">Nu există tranzacții încă</p>';
+            }
+
+            updateAllTransactions() {
+                const all = this.data.transactions
+                    .map(t => this.createTransactionElement(t))
+                    .join('');
+                
+                document.getElementById('allTransactions').innerHTML = all || '<p style="color: var(--text-secondary);">Nu există tranzacții încă</p>';
+            }
+
+            createTransactionElement(t) {
+                const icon = this.getCategoryIcon(t.category);
+                const date = new Date(t.date).toLocaleDateString('ro-RO');
+                const isRecurring = t.recurring ? '<span class="recurring-badge">Recurentă</span>' : '';
+                
+                return `
+                    <div class="transaction-item" onclick="app.deleteTransaction(${t.id})">
+                        <div style="display: flex; align-items: center;">
+                            <div class="transaction-icon">${icon}</div>
+                            <div class="transaction-details">
+                                <div class="transaction-desc">${t.description} ${isRecurring}</div>
+                                <div class="transaction-date">${date}</div>
+                            </div>
+                        </div>
+                        <div class="transaction-amount ${t.amount > 0 ? 'amount-positive' : 'amount-negative'}">
+                            ${t.amount > 0 ? '+' : ''}${t.amount.toFixed(2)} ${this.data.settings.currency}
+                        </div>
+                    </div>
+                `;
+            }
+
+            getCategoryIcon(category) {
+                const icons = {
+                    salary: '💰', freelance: '💻', investment: '📈', 'other-income': '💵',
+                    rent: '🏠', utilities: '💡', groceries: '🛒', transport: '🚗',
+                    food: '🍔', entertainment: '🎮', health: '🏥', education: '📚',
+                    shopping: '🛍️', subscription: '📱', other: '📦'
+                };
+                return icons[category] || '💳';
+            }
+
+            updateCharts() {
+                if (!this.charts.category || !this.charts.trend) return;
+                
+                // Category chart data
+                const categories = {};
+                this.data.transactions
+                    .filter(t => t.amount < 0)
+                    .forEach(t => {
+                        categories[t.category] = (categories[t.category] || 0) + Math.abs(t.amount);
+                    });
+                
+                this.charts.category.data.labels = Object.keys(categories).map(c => this.getCategoryLabel(c));
+                this.charts.category.data.datasets[0].data = Object.values(categories);
+                this.charts.category.update();
+                
+                // Trend chart data - last 30 days
+                const days = 30;
+                const labels = [];
+                const data = [];
+                let runningBalance = this.data.transactions.reduce((sum, t) => sum + t.amount, 0);
+                
+                for (let i = 0; i < days; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    labels.unshift(date.getDate());
+                    
+                    const dayTransactions = this.data.transactions.filter(t => {
+                        const tDate = new Date(t.date);
+                        return tDate.toDateString() === date.toDateString();
+                    });
+                    
+                    const daySum = dayTransactions.reduce((sum, t) => sum + t.amount, 0);
+                    runningBalance -= daySum;
+                    data.unshift(runningBalance);
+                }
+                
+                this.charts.trend.data.labels = labels;
+                this.charts.trend.data.datasets[0].data = data;
+                this.charts.trend.update();
+            }
+
+            getCategoryLabel(category) {
+                return category.charAt(0).toUpperCase() + category.slice(1).replace('-', ' ');
+            }
+
+            openQuickAdd(type = 'expense') {
+                this.currentTransactionType = type;
+                document.getElementById('modalTitle').textContent = type === 'income' ? 'Adaugă Venit' : 'Adaugă Cheltuială';
+                document.getElementById('transactionModal').classList.add('active');
+                document.getElementById('modalDate').value = new Date().toISOString().split('T')[0];
+            }
+
+            closeModal(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+            }
+
+            saveTransaction() {
+                const desc = document.getElementById('modalDesc').value;
+                const amount = parseFloat(document.getElementById('modalAmount').value);
+                const category = document.getElementById('modalCategory').value;
+                const date = document.getElementById('modalDate').value;
+                
+                if (!desc || !amount || !category) {
+                    this.showNotification('Completează toate câmpurile!', 'error');
+                    return;
+                }
+                
+                const transaction = {
+                    id: Date.now(),
+                    description: desc,
+                    amount: this.currentTransactionType === 'income' ? amount : -amount,
+                    category: category,
+                    date: date,
+                    type: this.currentTransactionType
+                };
+                
+                this.data.transactions.unshift(transaction);
+                this.saveData();
+                this.updateDashboard();
+                this.updateCharts();
+                this.closeModal('transactionModal');
+                this.showNotification('Tranzacție adăugată cu succes!', 'success');
+                
+                // Reset form
+                document.getElementById('transactionForm').reset();
+            }
+
+            deleteTransaction(id) {
+                if (confirm('Sigur vrei să ștergi această tranzacție?')) {
+                    this.data.transactions = this.data.transactions.filter(t => t.id !== id);
+                    this.saveData();
+                    this.updateDashboard();
+                    this.updateCharts();
+                    this.showNotification('Tranzacție ștearsă!', 'info');
+                }
+            }
+
+            filterTransactions(query) {
+                const filtered = this.data.transactions.filter(t => 
+                    t.description.toLowerCase().includes(query.toLowerCase()) ||
+                    t.category.includes(query.toLowerCase())
+                );
+                
+                const html = filtered.map(t => this.createTransactionElement(t)).join('');
+                document.getElementById('allTransactions').innerHTML = html || '<p>Nu s-au găsit tranzacții</p>';
+            }
+
+            // Goals
+            openGoalModal() {
+                document.getElementById('goalModal').classList.add('active');
+            }
+
+            saveGoal() {
+                const goal = {
+                    id: Date.now(),
+                    name: document.getElementById('goalName').value,
+                    target: parseFloat(document.getElementById('goalTarget').value),
+                    current: 0,
+                    deadline: document.getElementById('goalDeadline').value,
+                    icon: document.getElementById('goalIcon').value,
+                    created: new Date().toISOString()
+                };
+                
+                this.data.goals.push(goal);
+                this.saveData();
+                this.updateGoals();
+                this.closeModal('goalModal');
+                this.showNotification('Obiectiv adăugat!', 'success');
+            }
+
+            updateGoals() {
+                const html = this.data.goals.map(goal => {
+                    const progress = (goal.current / goal.target) * 100;
+                    const daysLeft = Math.ceil((new Date(goal.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    
+                    return `
+                        <div class="goal-card">
+                            <div class="goal-header">
+                                <div>
+                                    <span style="font-size: 24px; margin-right: 10px;">${goal.icon}</span>
+                                    <span class="goal-title">${goal.name}</span>
+                                </div>
+                                <button class="btn btn-success" style="padding: 8px 16px;" onclick="app.contributeToGoal(${goal.id})">
+                                    + Contribuie
+                                </button>
+                            </div>
+                            <div class="goal-amount">
+                                ${goal.current.toFixed(2)} / ${goal.target.toFixed(2)} ${this.data.settings.currency}
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${Math.min(progress, 100)}%"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 10px; font-size: 12px; color: var(--text-secondary);">
+                                <span>${progress.toFixed(1)}% completat</span>
+                                <span>${daysLeft > 0 ? `${daysLeft} zile rămase` : 'Expirat'}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('goalsGrid').innerHTML = html || '<p style="color: var(--text-secondary);">Nu ai obiective setate încă</p>';
+            }
+
+            contributeToGoal(goalId) {
+                const amount = prompt('Suma de contribuit (RON):');
+                if (amount && !isNaN(amount)) {
+                    const goal = this.data.goals.find(g => g.id === goalId);
+                    goal.current += parseFloat(amount);
+                    
+                    // Add as transaction
+                    this.data.transactions.unshift({
+                        id: Date.now(),
+                        description: `Economii: ${goal.name}`,
+                        amount: -parseFloat(amount),
+                        category: 'savings',
+                        date: new Date().toISOString().split('T')[0],
+                        type: 'expense'
+                    });
+                    
+                    this.saveData();
+                    this.updateGoals();
+                    this.updateDashboard();
+                    this.showNotification(`Ai contribuit ${amount} RON la ${goal.name}!`, 'success');
+                }
+            }
+
+            // Recurring
+            openRecurringModal() {
+                document.getElementById('recurringModal').classList.add('active');
+            }
+
+            saveRecurring() {
+                const recurring = {
+                    id: Date.now(),
+                    description: document.getElementById('recDesc').value,
+                    amount: parseFloat(document.getElementById('recAmount').value),
+                    type: document.getElementById('recType').value,
+                    category: document.getElementById('recCategory').value,
+                    frequency: document.getElementById('recFrequency').value,
+                    dayOfMonth: parseInt(document.getElementById('recDay').value) || 1,
+                    lastProcessed: null,
+                    active: true
+                };
+                
+                this.data.recurring.push(recurring);
+                this.saveData();
+                this.updateRecurring();
+                this.closeModal('recurringModal');
+                this.showNotification('Tranzacție recurentă adăugată!', 'success');
+            }
+
+            updateRecurring() {
+                const html = this.data.recurring.map(rec => {
+                    const icon = this.getCategoryIcon(rec.category);
+                    const nextDate = this.getNextRecurringDate(rec);
+                    
+                    return `
+                        <div class="transaction-item">
+                            <div style="display: flex; align-items: center;">
+                                <div class="transaction-icon">${icon}</div>
+                                <div class="transaction-details">
+                                    <div class="transaction-desc">${rec.description}</div>
+                                    <div class="transaction-date">${rec.frequency} - Următoarea: ${nextDate.toLocaleDateString('ro-RO')}</div>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <span class="transaction-amount ${rec.type === 'income' ? 'amount-positive' : 'amount-negative'}">
+                                    ${rec.type === 'income' ? '+' : '-'}${rec.amount.toFixed(2)} ${this.data.settings.currency}
+                                </span>
+                                <button class="btn ${rec.active ? 'btn-danger' : 'btn-success'}" 
+                                        style="padding: 8px 16px;" 
+                                        onclick="app.toggleRecurring(${rec.id})">
+                                    ${rec.active ? 'Dezactivează' : 'Activează'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('recurringList').innerHTML = html || '<p style="color: var(--text-secondary);">Nu ai tranzacții recurente</p>';
+            }
+
+            getNextRecurringDate(rec) {
+                const today = new Date();
+                let nextDate = new Date();
+                
+                switch (rec.frequency) {
+                    case 'daily':
+                        nextDate.setDate(today.getDate() + 1);
+                        break;
+                    case 'weekly':
+                        nextDate.setDate(today.getDate() + 7);
+                        break;
+                    case 'monthly':
+                        nextDate.setMonth(today.getMonth() + 1);
+                        nextDate.setDate(rec.dayOfMonth);
+                        break;
+                    case 'yearly':
+                        nextDate.setFullYear(today.getFullYear() + 1);
+                        break;
+                }
+                
+                return nextDate;
+            }
+
+            toggleRecurring(id) {
+                const rec = this.data.recurring.find(r => r.id === id);
+                rec.active = !rec.active;
+                this.saveData();
+                this.updateRecurring();
+                this.showNotification(rec.active ? 'Recurentă activată!' : 'Recurentă dezactivată!', 'info');
+            }
+
+            processRecurring() {
+                const today = new Date().toISOString().split('T')[0];
+                
+                this.data.recurring.forEach(rec => {
+                    if (!rec.active) return;
+                    
+                    const shouldProcess = this.shouldProcessRecurring(rec);
+                    if (shouldProcess) {
+                        this.data.transactions.unshift({
+                            id: Date.now() + Math.random(),
+                            description: rec.description,
+                            amount: rec.type === 'income' ? rec.amount : -rec.amount,
+                            category: rec.category,
+                            date: today,
+                            type: rec.type,
+                            recurring: true
+                        });
+                        
+                        rec.lastProcessed = today;
+                        this.showNotification(`Tranzacție recurentă procesată: ${rec.description}`, 'info');
+                    }
+                });
+                
+                this.saveData();
+            }
+
+            shouldProcessRecurring(rec) {
+                const today = new Date();
+                const lastProcessed = rec.lastProcessed ? new Date(rec.lastProcessed) : null;
+                
+                if (!lastProcessed) return true;
+                
+                switch (rec.frequency) {
+                    case 'daily':
+                        return today.getDate() !== lastProcessed.getDate();
+                    case 'weekly':
+                        const weekDiff = Math.floor((today - lastProcessed) / (7 * 24 * 60 * 60 * 1000));
+                        return weekDiff >= 1;
+                    case 'monthly':
+                        return today.getDate() === rec.dayOfMonth && 
+                               (today.getMonth() !== lastProcessed.getMonth() || 
+                                today.getFullYear() !== lastProcessed.getFullYear());
+                    case 'yearly':
+                        return today.getMonth() === lastProcessed.getMonth() &&
+                               today.getDate() === lastProcessed.getDate() &&
+                               today.getFullYear() !== lastProcessed.getFullYear();
+                    default:
+                        return false;
+                }
+            }
+
+            // Analytics
+            updateAnalytics() {
+                const expenses = this.data.transactions.filter(t => t.amount < 0);
+                const avgDaily = expenses.length > 0 
+                    ? Math.abs(expenses.reduce((sum, t) => sum + t.amount, 0) / 30)
+                    : 0;
+                
+                const biggest = expenses.length > 0
+                    ? Math.abs(Math.min(...expenses.map(t => t.amount)))
+                    : 0;
+                
+                const monthIncome = this.data.transactions
+                    .filter(t => t.amount > 0 && new Date(t.date).getMonth() === new Date().getMonth())
+                    .reduce((sum, t) => sum + t.amount, 0);
+                
+                const monthExpenses = Math.abs(this.data.transactions
+                    .filter(t => t.amount < 0 && new Date(t.date).getMonth() === new Date().getMonth())
+                    .reduce((sum, t) => sum + t.amount, 0));
+                
+                const estimated = monthIncome - monthExpenses;
+                
+                document.getElementById('avgDailySpending').textContent = `${avgDaily.toFixed(0)} ${this.data.settings.currency}`;
+                document.getElementById('biggestExpense').textContent = `${biggest.toFixed(0)} ${this.data.settings.currency}`;
+                document.getElementById('estimatedSavings').textContent = `${estimated.toFixed(0)} ${this.data.settings.currency}`;
+                
+                // Prediction chart
+                this.updatePredictionChart();
+            }
+
+            updatePredictionChart() {
+                const ctx = document.getElementById('predictionChart')?.getContext('2d');
+                if (!ctx) return;
+                
+                if (this.charts.prediction) {
+                    this.charts.prediction.destroy();
+                }
+                
+                const daysInMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).getDate();
+                const today = new Date().getDate();
+                const balance = this.data.transactions.reduce((sum, t) => sum + t.amount, 0);
+                
+                // Calculate average daily spending
+                const recentExpenses = this.data.transactions
+                    .filter(t => t.amount < 0 && new Date(t.date) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000))
+                    .reduce((sum, t) => sum + Math.abs(t.amount), 0) / 30;
+                
+                const labels = [];
+                const actual = [];
+                const predicted = [];
+                let currentBalance = balance;
+                
+                for (let i = 1; i <= daysInMonth; i++) {
+                    labels.push(i);
+                    
+                    if (i <= today) {
+                        const dayTransactions = this.data.transactions.filter(t => {
+                            const date = new Date(t.date);
+                            return date.getDate() === i && 
+                                   date.getMonth() === new Date().getMonth() &&
+                                   date.getFullYear() === new Date().getFullYear();
+                        });
+                        const daySum = dayTransactions.reduce((sum, t) => sum + t.amount, 0);
+                        currentBalance += daySum;
+                        actual.push(currentBalance);
+                        predicted.push(null);
+                    } else {
+                        actual.push(null);
+                        currentBalance -= recentExpenses;
+                        predicted.push(currentBalance);
+                    }
+                }
+                
+                this.charts.prediction = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Actual',
+                            data: actual,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Predicție',
+                            data: predicted,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            borderDash: [5, 5],
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: { color: '#a0a0b8' }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { color: '#a0a0b8' },
+                                grid: { color: 'rgba(160, 160, 184, 0.1)' }
+                            },
+                            x: {
+                                ticks: { color: '#a0a0b8' },
+                                grid: { color: 'rgba(160, 160, 184, 0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Budgets
+            updateBudgets() {
+                const categories = ['rent', 'utilities', 'groceries', 'transport', 'food', 'entertainment'];
+                
+                const html = categories.map(cat => {
+                    const budget = this.data.budgets[cat] || 0;
+                    const spent = Math.abs(this.data.transactions
+                        .filter(t => t.category === cat && t.amount < 0 && 
+                                new Date(t.date).getMonth() === new Date().getMonth())
+                        .reduce((sum, t) => sum + t.amount, 0));
+                    
+                    const percentage = budget > 0 ? (spent / budget) * 100 : 0;
+                    
+                    return `
+                        <div class="goal-card">
+                            <div class="goal-header">
+                                <div>
+                                    <span style="font-size: 24px; margin-right: 10px;">${this.getCategoryIcon(cat)}</span>
+                                    <span class="goal-title">${this.getCategoryLabel(cat)}</span>
+                                </div>
+                                <input type="number" class="input" style="width: 150px;" 
+                                       placeholder="Buget lunar" value="${budget}"
+                                       onchange="app.updateBudget('${cat}', this.value)">
+                            </div>
+                            <div class="goal-amount">
+                                ${spent.toFixed(2)} / ${budget.toFixed(2)} ${this.data.settings.currency}
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" 
+                                     style="width: ${Math.min(percentage, 100)}%; 
+                                            background: ${percentage > 100 ? 'var(--gradient-2)' : 'var(--gradient-success)'}">
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 12px; color: ${percentage > 100 ? 'var(--danger)' : 'var(--text-secondary)'};">
+                                ${percentage > 100 ? `Depășit cu ${(percentage - 100).toFixed(1)}%` : `${(100 - percentage).toFixed(1)}% rămas`}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                document.getElementById('budgetSettings').innerHTML = html;
+            }
+
+            updateBudget(category, value) {
+                this.data.budgets[category] = parseFloat(value) || 0;
+                this.saveData();
+                this.updateBudgets();
+                this.showNotification(`Buget actualizat pentru ${this.getCategoryLabel(category)}`, 'success');
+            }
+
+            // AI Insights
+            generateInsights() {
+                const insights = [];
+                const balance = this.data.transactions.reduce((sum, t) => sum + t.amount, 0);
+                const monthExpenses = Math.abs(this.data.transactions
+                    .filter(t => t.amount < 0 && new Date(t.date).getMonth() === new Date().getMonth())
+                    .reduce((sum, t) => sum + t.amount, 0));
+                
+                // Balance insights
+                if (balance < 500) {
+                    insights.push('⚠️ Balanța ta este scăzută. Consideră reducerea cheltuielilor non-esențiale.');
+                } else if (balance > 5000) {
+                    insights.push('🎉 Felicitări! Ai o balanță solidă. Consideră investirea surplusului.');
+                }
+                
+                // Spending insights
+                const avgMonthly = this.getAverageMonthlyExpenses();
+                if (monthExpenses > avgMonthly * 1.2) {
+                    insights.push('📊 Cheltuielile acestei luni sunt cu 20% peste medie. Verifică categoriile principale.');
+                }
+                
+                // Category insights
+                const topCategory = this.getTopExpenseCategory();
+                if (topCategory) {
+                    insights.push(`💸 Cea mai mare categorie de cheltuieli: ${this.getCategoryLabel(topCategory.category)} (${topCategory.percentage.toFixed(1)}% din total)`);
+                }
+                
+                // Goals insights
+                const activeGoals = this.data.goals.filter(g => new Date(g.deadline) > new Date());
+                if (activeGoals.length > 0) {
+                    const nearestGoal = activeGoals.sort((a, b) => new Date(a.deadline) - new Date(b.deadline))[0];
+                    const daysLeft = Math.ceil((new Date(nearestGoal.deadline) - new Date()) / (1000 * 60 * 60 * 24));
+                    insights.push(`🎯 Obiectivul "${nearestGoal.name}" expiră în ${daysLeft} zile. Progres: ${((nearestGoal.current / nearestGoal.target) * 100).toFixed(1)}%`);
+                }
+                
+                // Display random insight
+                if (insights.length > 0) {
+                    const randomInsight = insights[Math.floor(Math.random() * insights.length)];
+                    document.getElementById('insightText').innerHTML = randomInsight;
+                }
+            }
+
+            getAverageMonthlyExpenses() {
+                const months = {};
+                this.data.transactions
+                    .filter(t => t.amount < 0)
+                    .forEach(t => {
+                        const key = new Date(t.date).toISOString().substr(0, 7);
+                        months[key] = (months[key] || 0) + Math.abs(t.amount);
+                    });
+                
+                const values = Object.values(months);
+                return values.length > 0 ? values.reduce((a, b) => a + b) / values.length : 0;
+            }
+
+            getTopExpenseCategory() {
+                const categories = {};
+                const total = this.data.transactions
+                    .filter(t => t.amount < 0)
+                    .reduce((sum, t) => {
+                        categories[t.category] = (categories[t.category] || 0) + Math.abs(t.amount);
+                        return sum + Math.abs(t.amount);
+                    }, 0);
+                
+                const sorted = Object.entries(categories).sort((a, b) => b[1] - a[1]);
+                
+                if (sorted.length > 0) {
+                    return {
+                        category: sorted[0][0],
+                        amount: sorted[0][1],
+                        percentage: (sorted[0][1] / total) * 100
+                    };
+                }
+                
+                return null;
+            }
+
+            // Export/Import
+            exportCSV() {
+                const csv = ['Date,Description,Amount,Category,Type'];
+                this.data.transactions.forEach(t => {
+                    csv.push(`${t.date},"${t.description}",${t.amount},${t.category},${t.type}`);
+                });
+                
+                this.downloadFile('budget_export.csv', csv.join('\n'));
+                this.showNotification('Export CSV realizat!', 'success');
+            }
+
+            exportJSON() {
+                const json = JSON.stringify(this.data, null, 2);
+                this.downloadFile('budget_export.json', json);
+                this.showNotification('Export JSON realizat!', 'success');
+            }
+
+            downloadFile(filename, content) {
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+
+            importData() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const imported = JSON.parse(event.target.result);
+                            this.data = imported;
+                            this.saveData();
+                            this.updateDashboard();
+                            this.updateCharts();
+                            this.showNotification('Date importate cu succes!', 'success');
+                            location.reload();
+                        } catch (error) {
+                            this.showNotification('Eroare la import!', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }
+
+            // Notifications
+            showNotification(message, type = 'info') {
+                const notif = document.getElementById('notification');
+                const icon = {
+                    success: '✅',
+                    error: '❌',
+                    info: 'ℹ️',
+                    warning: '⚠️'
+                };
+                
+                document.getElementById('notifIcon').textContent = icon[type];
+                document.getElementById('notifText').textContent = message;
+                notif.classList.add('show');
+                
+                setTimeout(() => {
+                    notif.classList.remove('show');
+                }, 3000);
+            }
+
+            // Demo Data
+            generateDemoData() {
+                const categories = {
+                    income: ['salary', 'freelance', 'investment'],
+                    expense: ['rent', 'utilities', 'groceries', 'transport', 'food', 'entertainment', 'shopping']
+                };
+                
+                const descriptions = {
+                    salary: ['Salariu lunar', 'Salariu'],
+                    freelance: ['Proiect client', 'Freelance work'],
+                    investment: ['Dividende', 'Profit investiții'],
+                    rent: ['Chirie apartament', 'Chirie'],
+                    utilities: ['Facturi utilități', 'Curent', 'Gaz', 'Internet'],
+                    groceries: ['Cumpărături Lidl', 'Kaufland', 'Mega Image'],
+                    transport: ['Benzină', 'STB', 'Uber'],
+                    food: ['Restaurant', 'Livrare mâncare', 'Cafea'],
+                    entertainment: ['Netflix', 'Cinema', 'Concert'],
+                    shopping: ['Haine', 'Electronice', 'Cadouri']
+                };
+                
+                // Generate 30 days of transactions
+                for (let i = 0; i < 30; i++) {
+                    const date = new Date();
+                    date.setDate(date.getDate() - i);
+                    
+                    // Random transactions for each day
+                    const numTransactions = Math.floor(Math.random() * 3) + 1;
+                    
+                    for (let j = 0; j < numTransactions; j++) {
+                        const isIncome = Math.random() > 0.9; // 10% șansă de venit
+                        const type = isIncome ? 'income' : 'expense';
+                        const categoryList = categories[type];
+                        const category = categoryList[Math.floor(Math.random() * categoryList.length)];
+                        const descList = descriptions[category];
+                        const description = descList[Math.floor(Math.random() * descList.length)];
+                        
+                        let amount;
+                        if (category === 'salary') {
+                            amount = 4500 + Math.random() * 1500;
+                        } else if (category === 'rent') {
+                            amount = 1200;
+                        } else if (category === 'utilities') {
+                            amount = 150 + Math.random() * 100;
+                        } else {
+                            amount = 20 + Math.random() * 200;
+                        }
+                        
+                        this.data.transactions.push({
+                            id: Date.now() + Math.random(),
+                            description: description,
+                            amount: isIncome ? amount : -amount,
+                            category: category,
+                            date: date.toISOString().split('T')[0],
+                            type: type
+                        });
+                    }
+                }
+                
+                // Add some goals
+                this.data.goals = [
+                    {
+                        id: 1,
+                        name: 'Fond de Urgență',
+                        target: 10000,
+                        current: 3500,
+                        deadline: '2025-12-31',
+                        icon: '🛡️',
+                        created: new Date().toISOString()
+                    },
+                    {
+                        id: 2,
+                        name: 'Vacanță Grecia',
+                        target: 5000,
+                        current: 1200,
+                        deadline: '2025-07-01',
+                        icon: '✈️',
+                        created: new Date().toISOString()
+                    }
+                ];
+                
+                // Add recurring transactions
+                this.data.recurring = [
+                    {
+                        id: 1,
+                        description: 'Chirie',
+                        amount: 1200,
+                        type: 'expense',
+                        category: 'rent',
+                        frequency: 'monthly',
+                        dayOfMonth: 5,
+                        lastProcessed: null,
+                        active: true
+                    },
+                    {
+                        id: 2,
+                        description: 'Netflix',
+                        amount: 52,
+                        type: 'expense',
+                        category: 'entertainment',
+                        frequency: 'monthly',
+                        dayOfMonth: 15,
+                        lastProcessed: null,
+                        active: true
+                    }
+                ];
+                
+                // Set some budgets
+                this.data.budgets = {
+                    rent: 1200,
+                    utilities: 300,
+                    groceries: 800,
+                    transport: 400,
+                    food: 600,
+                    entertainment: 500
+                };
+                
+                this.saveData();
+            }
+
+            // Service Worker
+            registerServiceWorker() {
+                if ('serviceWorker' in navigator) {
+                    const sw = `
+                        self.addEventListener('install', event => {
+                            event.waitUntil(
+                                caches.open('budget-pro-v2').then(cache => {
+                                    return cache.addAll(['/']);
+                                })
+                            );
+                        });
+
+                        self.addEventListener('fetch', event => {
+                            event.respondWith(
+                                caches.match(event.request).then(response => {
+                                    return response || fetch(event.request);
+                                })
+                            );
+                        });
+                    `;
+                    
+                    const blob = new Blob([sw], { type: 'application/javascript' });
+                    const swUrl = URL.createObjectURL(blob);
+                    
+                    navigator.serviceWorker.register(swUrl).catch(error => {
+                        console.log('SW Registration failed:', error);
+                    });
+                }
+            }
+        }
+
+        // Initialize App
+        const app = new BudgetPro();
+    </script>
 </body>
 </html>
